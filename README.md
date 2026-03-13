@@ -1,90 +1,108 @@
 # jpstack
 
-**12 opinionated Claude Code skills for running a healthcare AI startup as a solo founder.**
+**14 opinionated Claude Code skills for running a healthcare AI startup as a solo founder.**
 
 Built by [JP Montoya](https://linkedin.com/in/jpmontoya), CEO of [Solum Health](https://getsolum.com) (YC S22). These are the exact skills I use daily to run sales, find PMF, prep for conferences, coach my pricing, plan sprints, and build content — all from the terminal.
+
+Pairs with [gstack](https://github.com/garrytan/gstack) for engineering execution. jpstack handles the business side, gstack handles the code side.
 
 ## The Skills
 
 ### Founder Operating System
 
-| Skill | Slash Command | Role | What It Does |
-|-------|--------------|------|--------------|
-| [Chief of Staff](chief-of-staff/) | `/chief-of-staff` | Daily Briefer | Pulls HubSpot pipeline, Fireflies meetings, Apollo sequences. Classifies deals as HOT/AT RISK/STALE. Delivers a prioritized morning briefing in under 3 minutes. |
-| [PMF Pulse](pmf-pulse/) | `/pmf-pulse` | Strategy Advisor | Multi-source intelligence engine: customer calls, Reddit pain points, Indeed role attrition, competitor benchmarks (Ahrefs), industry forums. Tells you where to focus, what to cut, where to double down. |
-| [Product Insights](product-insights/) | `/product-insights` | Sprint Planner | Aggregates feature requests, bugs, UX friction, and workflow gaps from customer calls and CRM. RICE-scores everything. Feeds engineering with prioritized, evidence-backed sprint items. |
-| [Investor Report](investor-report/) | `/investor-report` | Board Reporter | Pulls KPIs from Google Sheets and customer call insights from Fireflies. Outputs a structured DOCX matching our investor update template. |
+| Skill | Slash Command | What It Does |
+|-------|--------------|--------------|
+| [Chief of Staff](chief-of-staff/) | `/chief-of-staff` | Morning briefing from HubSpot pipeline, Fireflies meetings, Apollo sequences. Classifies deals as HOT/AT RISK/STALE. |
+| [PMF Pulse](pmf-pulse/) | `/pmf-pulse` | Multi-source PMF intelligence: customer calls, Reddit pain points, Indeed role attrition, Ahrefs competitor benchmarks, industry forums. Where to focus, what to cut, where to double down. |
+| [Product Insights](product-insights/) | `/product-insights` | Sprint planning data: feature requests, bugs, UX friction, workflow gaps from customer calls. RICE-scored and ready for engineering. |
+| [Weekly Retro](weekly-retro/) | `/weekly-retro` | Friday scorecard across all channels: revenue pace vs. $2M target, deals won/lost, calls made, outreach performance, content published. Trend tracking week-over-week. |
+| [Investor Report](investor-report/) | `/investor-report` | Monthly investor update DOCX from Google Sheets KPIs + Fireflies call insights. |
 
 ### Sales & Revenue
 
-| Skill | Slash Command | Role | What It Does |
-|-------|--------------|------|--------------|
-| [Pricing Coach](pricing-coach/) | `/pricing-coach` | Sales Coach | Analyzes sales calls from Fireflies for pricing conversation quality. Scores each call 1-5 against proven benchmarks (86% free trial win rate), flags violations, delivers coaching reports with scripts. |
-| [Conference Prep](conference-prep/) | `/conference-prep` | Event Strategist | Two parallel tracks: (1) Lead intelligence pipeline — extract attendees, classify ICPs, enrich via Apollo, verify emails. (2) Branded curated agenda with top session picks. |
-| [Post-Conference Insights](post-conference-insights/) | `/post-conference-insights` | Thought Leadership | Turns any conference into a branded 1-2 page PDF one-pager with stat cards, insight sections, and role-based action items. Anti-AI detection pass included. |
-| [Prior Auth Review](prior-auth-review/) | `/prior-auth-review` | Product Demo | Automates payer review of prior authorization requests using NPI, ICD-10, and CMS Coverage MCP connectors. Reduces 30-60 min reviews to under 5 minutes. |
+| Skill | Slash Command | What It Does |
+|-------|--------------|--------------|
+| [Pricing Coach](pricing-coach/) | `/pricing-coach` | Analyzes sales calls for pricing quality. Scores 1-5 against proven benchmarks (86% free trial win rate), flags violations, delivers coaching with scripts. |
+| [Conference Prep](conference-prep/) | `/conference-prep` | Pre-conference: Lead enrichment via Apollo + branded curated agenda with top session picks. |
+| [Post-Conference Insights](post-conference-insights/) | `/post-conference-insights` | Post-conference: Branded 1-2 page PDF one-pager with stat cards and role-based action items. Anti-AI detection pass. |
+| [Post-Conference Follow-Up](post-conference-fup/) | `/post-conference-fup` | Post-conference: Segments contacts into HOT/WARM/COOL/COLD, builds tailored Apollo sequences for each segment, creates HubSpot deals, tracks conference ROI. |
+| [Prior Auth Review](prior-auth-review/) | `/prior-auth-review` | Product demo: Automates payer PA review using NPI, ICD-10, CMS Coverage MCP connectors. 30-min review in under 5 minutes. |
 
 ### Content & Brand
 
-| Skill | Slash Command | Role | What It Does |
-|-------|--------------|------|--------------|
-| [X Healthcare Posts](x-healthcare-posts/) | `/x-healthcare-posts` | Content Creator | High-performing X posts and threads for Healthcare AI audiences. Car Dealership Guy style operator voice. Optimized for X's Heavy Ranker algorithm. |
-| [LinkedIn Carousel Builder](linkedin-carousel-builder/) | `/linkedin-carousel-builder` | Visual Content | Branded carousel PDFs (1080x1350, 4:5 portrait) with safe zone compliance, mobile-optimized typography, and Playwright export. |
-| [Fact Check](fact-check/) | `/fact-check` | QA Engineer | Verifies numerical claims and data-driven statements before finalization. Writes verification scripts, classifies claims, produces audit reports. |
-| [Solum Health Brand](solum-health-brand/) | `/solum-health-brand` | Brand Guardian | Auto-activates on any Solum Health content. Complete design system: colors, typography (DM Sans), gradients, spacing, CSS starter. |
+| Skill | Slash Command | What It Does |
+|-------|--------------|--------------|
+| [X Healthcare Posts](x-healthcare-posts/) | `/x-healthcare-posts` | X posts and threads for Healthcare AI audiences. Car Dealership Guy style. Optimized for Heavy Ranker algorithm. |
+| [LinkedIn Carousel Builder](linkedin-carousel-builder/) | `/linkedin-carousel-builder` | Branded carousel PDFs (1080x1350, 4:5) with safe zone compliance and Playwright export. |
+| [Fact Check](fact-check/) | `/fact-check` | Verifies numerical claims before finalization. Writes verification scripts, classifies claims, produces audit reports. |
+| [Solum Health Brand](solum-health-brand/) | `/solum-health-brand` | Auto-activates on any Solum content. Full design system: colors, DM Sans typography, gradients, CSS starter. |
 
-## Who This Is For
+## Companion: gstack (Engineering Execution)
 
-Founder-CEOs running B2B sales at early-stage startups, especially in healthcare. If you're:
+jpstack handles business execution. For engineering execution, install [gstack](https://github.com/garrytan/gstack) alongside:
 
-- Doing founder-led sales and want your CRM to talk to you every morning
-- Trying to find PMF and need market intelligence from Reddit, Indeed, competitors, and customers — all in one report
-- Planning sprints with actual customer evidence instead of gut feel
-- Attending 10+ conferences a year and need a system for lead gen + prep
-- Building content for X and LinkedIn without a marketing team
-- Coaching yourself on pricing conversations
-
-These skills assume you have Claude Code with MCP connectors for HubSpot, Apollo, Fireflies, and optionally Google Workspace.
-
-## Installation
+| gstack Skill | What It Does |
+|-------------|--------------|
+| `/plan-ceo-review` | Rethinks the problem before building. "What is the 10-star product?" |
+| `/plan-eng-review` | Architecture review: data flow, diagrams, edge cases, test matrix |
+| `/review` | Paranoid code review: N+1 queries, race conditions, trust boundaries |
+| `/ship` | Release workflow: sync main, run tests, push branch, open PR |
+| `/qa` | Systematic QA testing with health scores and structured reports |
+| `/retro` | Engineering retro: commit history, LOC, test ratios, PR sizes |
+| `/browse` | Headless Chromium for testing web apps |
 
 ```bash
-# Clone into your Claude skills directory
+# Install both stacks
 git clone https://github.com/jp-solumhealth/jpstack.git ~/.claude/skills/jpstack
-
-# Run setup to create symlinks
+git clone https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
 cd ~/.claude/skills/jpstack && ./setup
+cd ~/.claude/skills/gstack && ./setup
 ```
 
-The `setup` script creates symlinks from `~/.claude/skills/<skill-name>` to each skill directory. No binaries, no background processes.
+## The Full Conference Lifecycle
+
+jpstack includes a complete conference pipeline across 3 skills:
+
+```
+BEFORE                    DURING              AFTER
+/conference-prep    →    [attend]    →    /post-conference-insights
+  - ICP attendee list                       - Branded PDF one-pager
+  - Apollo enrichment                       - Shareable with prospects
+  - Curated agenda doc
+                                         /post-conference-fup
+                                           - Segment HOT/WARM/COOL/COLD
+                                           - Personalized emails for HOT
+                                           - Apollo sequences for rest
+                                           - HubSpot deals + ROI tracking
+```
 
 ## Requirements
 
 - [Claude Code](https://claude.ai/code) with skills support
 - MCP connectors (optional but recommended):
-  - **HubSpot** — for Chief of Staff and Product Insights
-  - **Fireflies** — for Pricing Coach, Product Insights, PMF Pulse, and Investor Report
-  - **Apollo.io** — for Conference Prep lead enrichment and PMF Pulse
-  - **Ahrefs** — for PMF Pulse competitor benchmarking
-  - **ICD-10 / NPI / CMS Coverage** — for Prior Auth Review demo
-- Python 3.10+ with `fpdf2` — for Post-Conference PDF generation
-- Playwright — for LinkedIn Carousel export
+  - **HubSpot** — Chief of Staff, Product Insights, Weekly Retro, Post-Conference FUP
+  - **Fireflies** — Pricing Coach, Product Insights, PMF Pulse, Investor Report, Weekly Retro
+  - **Apollo.io** — Conference Prep, Post-Conference FUP, PMF Pulse, Weekly Retro
+  - **Ahrefs** — PMF Pulse competitor benchmarking
+  - **ICD-10 / NPI / CMS Coverage** — Prior Auth Review demo
+- Python 3.10+ with `fpdf2` — Post-Conference PDF generation
+- Playwright — LinkedIn Carousel export
 
-## How Skills Work
+## Installation
 
-Each skill is a directory with a `SKILL.md` file that Claude Code loads as instructions when invoked via slash command. Some skills include:
-
-- `references/` — Rubrics, checklists, brand guides, and criteria docs
-- `scripts/` — Python scripts for PDF generation, data analysis
-- `assets/` — Templates, logos, and design files
+```bash
+git clone https://github.com/jp-solumhealth/jpstack.git ~/.claude/skills/jpstack
+cd ~/.claude/skills/jpstack && ./setup
+```
 
 ## Customizing for Your Startup
 
-1. **Fork this repo** and replace Solum Health brand with yours in `solum-health-brand/SKILL.md`
-2. **Update ICP criteria** in `conference-prep/references/icp-criteria.md` with your target customer profile
-3. **Adjust pricing benchmarks** in `pricing-coach/references/scoring-rubric.md` to match your pricing model
-4. **Update PMF Pulse** with your competitive landscape and Reddit search terms in `pmf-pulse/SKILL.md`
-5. **Swap MCP connectors** — the skills reference HubSpot/Apollo/Fireflies but the patterns work with any CRM/dialer
+1. Fork and replace brand in `solum-health-brand/SKILL.md`
+2. Update ICP criteria in `conference-prep/references/icp-criteria.md`
+3. Adjust pricing benchmarks in `pricing-coach/references/scoring-rubric.md`
+4. Update PMF Pulse competitors and Reddit terms in `pmf-pulse/SKILL.md`
+5. Set your revenue target in `weekly-retro/SKILL.md`
+6. Swap MCP connectors — patterns work with any CRM/dialer
 
 ## About Solum Health
 
