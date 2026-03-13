@@ -1,0 +1,57 @@
+#!/bin/bash
+# jpstack setup — creates symlinks from ~/.claude/skills/ to each skill directory
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SKILLS_DIR="$HOME/.claude/skills"
+
+mkdir -p "$SKILLS_DIR"
+
+SKILLS=(
+  "chief-of-staff"
+  "conference-prep"
+  "post-conference-insights"
+  "pricing-coach"
+  "prior-auth-review"
+  "investor-report"
+  "solum-health-brand"
+  "x-healthcare-posts"
+  "linkedin-carousel-builder"
+  "fact-check"
+  "pmf-pulse"
+  "product-insights"
+)
+
+echo "jpstack — installing 12 skills to $SKILLS_DIR"
+echo ""
+
+for skill in "${SKILLS[@]}"; do
+  target="$SKILLS_DIR/$skill"
+  source="$SCRIPT_DIR/$skill"
+
+  if [ -L "$target" ]; then
+    existing=$(readlink "$target")
+    if [ "$existing" = "$source" ]; then
+      echo "  [ok] $skill (already linked)"
+      continue
+    else
+      echo "  [update] $skill (relinking from $existing)"
+      rm "$target"
+    fi
+  elif [ -e "$target" ]; then
+    echo "  [skip] $skill (directory exists, not a symlink — remove manually if you want jpstack to manage it)"
+    continue
+  fi
+
+  ln -s "$source" "$target"
+  echo "  [installed] $skill"
+done
+
+echo ""
+echo "Done. Add this to your CLAUDE.md to enable slash commands:"
+echo ""
+echo '  ## jpstack Skills'
+echo '  Custom skills installed from jpstack. Available slash commands:'
+echo '  /chief-of-staff, /pricing-coach, /conference-prep, /post-conference-insights,'
+echo '  /investor-report, /prior-auth-review, /x-healthcare-posts,'
+echo '  /linkedin-carousel-builder, /fact-check, /solum-health-brand'
