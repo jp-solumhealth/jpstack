@@ -16,6 +16,24 @@ Generate production-ready Statements of Work with embedded business cases for So
 prospects. Every number is sourced, every claim is cross-referenced, and every assumption
 is flagged.
 
+## API Authentication
+
+All data collection uses direct HTTP API calls via the Bash tool with `curl`, piped through `python3` for JSON parsing. API keys are stored in `~/.claude/.api-keys.json`.
+
+| Service | Base URL | Auth Method | Key Path |
+|---------|----------|-------------|----------|
+| Fireflies | `https://api.fireflies.ai/graphql` | `Authorization: Bearer <KEY>` | `.keys.fireflies.key` |
+| HubSpot | `https://api.hubapi.com` | `Authorization: Bearer <KEY>` | `.keys.hubspot.key` |
+| Apollo | `https://api.apollo.io` | `X-Api-Key: <KEY>` header | `.keys["apollo.io"].key` |
+
+To load a key at runtime:
+
+```bash
+FIREFLIES_KEY=$(python3 -c "import json; print(json.load(open('$HOME/.claude/.api-keys.json'))['keys']['fireflies']['key'])")
+HUBSPOT_KEY=$(python3 -c "import json; print(json.load(open('$HOME/.claude/.api-keys.json'))['keys']['hubspot']['key'])")
+APOLLO_KEY=$(python3 -c "import json; print(json.load(open('$HOME/.claude/.api-keys.json'))['keys']['apollo.io']['key'])")
+```
+
 ## Core Principle
 
 A SOW is a commitment document. Overpromise here and you lose trust, margin, or both. Every
@@ -37,20 +55,27 @@ before writing a single word.
 
 #### 1A. Fireflies — Call Transcripts
 
-Search for ALL transcripts mentioning this company:
+Fetch all recent transcripts and filter client-side by company name:
 
+```bash
+curl -s "https://api.fireflies.ai/graphql" \
+  -H "Authorization: Bearer $FIREFLIES_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "query { transcripts(mine: true, limit: 50) { id title date duration participants summary { action_items overview shorthand_bullet } } }"}' \
+  | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+for t in data.get('data', {}).get('transcripts', []):
+    if '{company_name}'.lower() in t.get('title', '').lower():
+        print(json.dumps(t, indent=2))
+"
 ```
-fireflies_search: keyword:"{company_name}" scope:title from:2025-01-01 limit:50
-```
+
+**Note:** The `date` field is Unix milliseconds. The `action_items` field is a string (not an array). Filter transcripts client-side by checking if the company name appears in the title.
 
 Also search for key contacts by name if known.
 
-For each matching transcript, retrieve the full summary:
-```
-fireflies_get_summary: id:{transcript_id}
-```
-
-Extract from each call:
+For each matching transcript, extract:
 - **Pain points** — What problems did they describe? Use their exact words.
 - **Requirements** — What did they say they need? Features, integrations, workflows.
 - **Volume data** — Any numbers: orders/month, claims/month, auth requests, call volumes, employee counts, patient counts, client counts.
@@ -66,32 +91,106 @@ Extract from each call:
 
 Search for the company and related records:
 
-```
-search_crm_objects: objectType:"companies" query:"{company_name}"
-search_crm_objects: objectType:"deals" query:"{company_name}"
-search_crm_objects: objectType:"contacts" query:"{company_name}"
+```bash
+# Search companies
+curl -s "https://api.hubapi.com/crm/v3/objects/companies/search" \
+  -H "Authorization: Bearer $HUBSPOT_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"filterGroups":[{"filters":[{"propertyName":"name","operator":"CONTAINS_TOKEN","value":"{company_name}"}]}],"properties":["name","domain","industry","numberofemployees","city","state","website"]}' \
+  | python3 -m json.tool
+
+# Search deals
+curl -s "https://api.hubapi.com/crm/v3/objects/deals/search" \
+  -H "Authorization: Bearer $HUBSPOT_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"filterGroups":[{"filters":[{"propertyName":"dealname","operator":"CONTAINS_TOKEN","value":"{company_name}"}]}],"properties":["dealname","dealstage","amount","closedate","pipeline"]}' \
+  | python3 -m json.tool
+
+# Search contacts
+curl -s "https://api.hubapi.com/crm/v3/objects/contacts/search" \
+  -H "Authorization: Bearer $HUBSPOT_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"filterGroups":[{"filters":[{"propertyName":"company","operator":"CONTAINS_TOKEN","value":"{company_name}"}]}],"properties":["firstname","lastname","email","jobtitle","phone"]}' \
+  | python3 -m json.tool
 ```
 
 Extract:
 - **Deal stage** — Where are they in the pipeline?
 - **Deal amount** — What's the expected value?
 - **Contacts** — Names, titles, emails of all stakeholders
-- **Email history** — Any requirements, questions, or data shared via email
 - **Company properties** — Industry, size, location, website
 - **Notes** — Any internal notes from previous interactions
 - **Associated activities** — Meetings logged, tasks, follow-ups
+
+#### 1B-2. HubSpot — Email Thread Pull
+
+After finding contacts in 1B, pull the actual email engagement history for each contact.
+Email threads often contain requirements, specs, and follow-up questions that never come up
+on calls.
+
+**Step 1: Get contact IDs** from the search results above.
+
+**Step 2: Pull email associations for each contact:**
+
+```bash
+# Get emails associated with a contact
+curl -s "https://api.hubapi.com/crm/v3/objects/contacts/{contact_id}/associations/emails" \
+  -H "Authorization: Bearer $HUBSPOT_KEY" \
+  | python3 -m json.tool
+```
+
+**Step 3: Fetch each email's content:**
+
+```bash
+# Get email details (subject, body, direction, timestamp)
+curl -s "https://api.hubapi.com/crm/v3/objects/emails/{email_id}?properties=hs_email_subject,hs_email_text,hs_email_html,hs_email_direction,hs_timestamp,hs_email_sender_email,hs_email_to_email" \
+  -H "Authorization: Bearer $HUBSPOT_KEY" \
+  | python3 -m json.tool
+```
+
+**Step 4: For large threads (10+ emails), batch the requests:**
+
+```bash
+# Batch read emails
+curl -s -X POST "https://api.hubapi.com/crm/v3/objects/emails/batch/read" \
+  -H "Authorization: Bearer $HUBSPOT_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"inputs":[{"id":"{email_id_1}"},{"id":"{email_id_2}"}],"properties":["hs_email_subject","hs_email_text","hs_email_direction","hs_timestamp"]}' \
+  | python3 -m json.tool
+```
+
+From the email threads, extract:
+- **Requirements shared via email** — specs, feature requests, workflow descriptions
+- **Questions asked** — what clarifications did the prospect request?
+- **Attachments mentioned** — any docs, spreadsheets, or screenshots referenced
+- **Volume data** — numbers shared in writing (these are more reliable than verbal estimates)
+- **Pricing follow-ups** — any pricing questions or counter-proposals via email
+- **Timeline commitments** — dates or deadlines mentioned in writing
+- **Stakeholder signals** — who was CC'd, who forwarded, who responded
+
+**Important:** Email data is often more reliable than call transcript data because it's
+written and intentional. When email data conflicts with transcript data, flag both but
+give higher weight to the email version in the fact-check.
 
 #### 1C. Apollo — Company Enrichment
 
 Enrich the company profile:
 
-```
-apollo_organizations_enrich: domain:"{company_domain}"
+```bash
+# Enrich by domain
+curl -s "https://api.apollo.io/v1/organizations/enrich?domain={company_domain}" \
+  -H "X-Api-Key: $APOLLO_KEY" \
+  | python3 -m json.tool
 ```
 
 If domain unknown, search first:
-```
-apollo_mixed_companies_search: q:"{company_name}"
+```bash
+# Search by company name
+curl -s -X POST "https://api.apollo.io/v1/mixed_companies/search" \
+  -H "X-Api-Key: $APOLLO_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"q_organization_name":"{company_name}","per_page":5}' \
+  | python3 -m json.tool
 ```
 
 Extract:
@@ -181,7 +280,35 @@ End with the value proposition: what Solum delivers and the expected impact.}
 
 ---
 
-### 3. Scope of Work
+### 3. Why Solum Health
+
+{This section bridges the prospect's pain (Section 2) with the solution (Section 4).
+It should feel personal and credible, not like a brochure. 3-4 short paragraphs max.}
+
+**Built by a practice owner.** JP Montoya managed a mental health practice with 80+
+providers and 20,000+ patients for four years. Solum is the tool he wished he had when
+scaling his own operations. That practitioner experience shapes every product decision.
+
+**Your EHR stores data. We run the workflows.** Solum doesn't replace your EMR. We sit
+on top of it and automate the administrative work your team does manually today: intake,
+prior authorizations, benefits verification, referral processing, scheduling, and patient
+communication. Your clinical staff stays focused on care.
+
+{Add a paragraph specific to this prospect's situation — connect their top 1-2 pain
+points from Section 2 to what Solum actually does for practices like theirs. Reference
+similar companies by type (not name) if relevant: "We work with ABA groups processing
+500+ auths/month" or "Behavioral health practices with 50+ providers use Solum to..."
+Keep it concrete and operational, not aspirational.}
+
+{If the prospect mentioned competitors on calls, add a brief differentiation paragraph
+here. Do NOT name competitors directly. Instead: "Unlike tools built for hospitals or
+general medical practices, Solum is purpose-built for therapy and behavioral health
+workflows. Our AI assistant Annie understands the specific payer rules, authorization
+requirements, and intake patterns your practice deals with daily."}
+
+---
+
+### 4. Scope of Work
 
 #### Phase 1: {Name — e.g., "Prior Authorization Automation"}
 **Timeline:** {weeks/months}
@@ -207,7 +334,7 @@ End with the value proposition: what Solum delivers and the expected impact.}
 
 ---
 
-### 4. Business Case
+### 5. Business Case
 
 #### Volume Data (from {company_name})
 | Metric | Value | Source |
@@ -241,11 +368,11 @@ End with the value proposition: what Solum delivers and the expected impact.}
 | ROI | {net savings / solum cost x 100}% |
 | Payback period | {months to recoup implementation fee} |
 
-*All calculations use conservative assumptions. See Section 7 for assumptions.*
+*All calculations use conservative assumptions. See Section 8 for assumptions.*
 
 ---
 
-### 5. Implementation Plan
+### 6. Implementation Plan
 
 | Phase | Timeline | Milestones | {Company} Responsibilities |
 |-------|----------|------------|---------------------------|
@@ -262,7 +389,7 @@ End with the value proposition: what Solum delivers and the expected impact.}
 
 ---
 
-### 6. Pricing
+### 7. Pricing
 
 | Item | Unit | Rate | Estimated Monthly |
 |------|------|------|-------------------|
@@ -281,7 +408,7 @@ End with the value proposition: what Solum delivers and the expected impact.}
 
 ---
 
-### 7. Requirements & Assumptions
+### 8. Requirements & Assumptions
 
 #### Technical Requirements
 - {EMR: name, version, API access needed}
@@ -305,7 +432,7 @@ End with the value proposition: what Solum delivers and the expected impact.}
 
 ---
 
-### 8. Fact-Check Notes
+### 9. Fact-Check Notes
 
 > **INTERNAL ONLY — Remove this section before sending to prospect.**
 
@@ -418,7 +545,7 @@ Free trial: available for Growth tier, 2-4 week test period.
 
 ## Important Notes
 
-- **Fireflies, HubSpot, and Apollo MCPs are required.** If any are not connected, tell the user which ones are missing and proceed with available sources.
+- **Direct API access to Fireflies, HubSpot, and Apollo is required. Keys stored in ~/.claude/.api-keys.json.** If any keys are missing or API calls fail, tell the user which service is unavailable and proceed with available sources.
 - **This is a living document.** After generating, the user will likely want to iterate. Support edits, re-pulls, and version bumps.
 - **The SOW is not a contract.** It's a scoping document. Do not include legal terms, liability clauses, or binding language. If the prospect needs a contract, that's a separate step.
 - **Speed matters.** The user wants this generated quickly after calls, not days later. Optimize for fast data pulls and assembly.
