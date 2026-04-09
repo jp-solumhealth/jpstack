@@ -250,7 +250,7 @@ Offer user options to:
 ## Error Handling
 
 **Missing MCP Servers:**
-If required MCP connectors not available, display error listing missing connectors and exit gracefully.
+If required MCP connectors not available, display error listing missing connectors and Removefully.
 
 **Missing Subskill Prerequisites:**
 If Subskill 2 invoked without `waypoints/assessment.json`, notify user to complete Subskill 1 first.
@@ -323,15 +323,15 @@ Before completing workflow, verify:
 
 ### Common Mistakes to Avoid
 
-- Don't generate fake data when MCP queries fail
-- Don't skip prerequisite checks
-- Don't overwrite existing files without checking
-- Don't proceed if current subskill had errors
-- Don't call ICD-10 MCP multiple times for same codes
-- DO provide clear, actionable error messages
-- DO give users options when things go wrong
-- DO validate data quality at each step
-- DO execute MCP calls in parallel where possible
+- ❌ Don't generate fake data when MCP queries fail
+- ❌ Don't skip prerequisite checks
+- ❌ Don't overwrite existing files without checking
+- ❌ Don't proceed if current subskill had errors
+- ❌ Don't call ICD-10 MCP multiple times for same codes
+- ✅ DO provide clear, actionable error messages
+- ✅ DO give users options when things go wrong
+- ✅ DO validate data quality at each step
+- ✅ DO execute MCP calls in parallel where possible
 
 ---
 
@@ -357,3 +357,4 @@ Before completing workflow, verify:
 - Creates provider notification letter
 - Documents complete audit trail
 - **Output:** `waypoints/decision.json` and notification letter
+
