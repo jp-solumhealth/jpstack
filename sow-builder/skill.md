@@ -283,16 +283,35 @@ End with the value proposition: what Solum delivers and the expected impact.}
 ### 3. Why Solum Health
 
 {This section bridges the prospect's pain (Section 2) with the solution (Section 4).
-It should feel personal and credible, not like a brochure. 3-4 short paragraphs max.}
+It should feel personal and credible, not like a brochure. 5-6 short paragraphs covering
+the pillars below. Adapt language to the prospect's context.}
 
-**Built by a practice owner.** JP Montoya managed a mental health practice with 80+
-providers and 20,000+ patients for four years. Solum is the tool he wished he had when
-scaling his own operations. That practitioner experience shapes every product decision.
+**Built by operators, for operators.** JP Montoya managed a mental health practice with
+80+ providers and 20,000+ patients for four years. Solum's leadership team includes
+healthcare operators and industry experts who have lived the problems this product solves.
+Every feature exists because someone on the team needed it when running a practice.
 
 **Your EHR stores data. We run the workflows.** Solum doesn't replace your EMR. We sit
 on top of it and automate the administrative work your team does manually today: intake,
 prior authorizations, benefits verification, referral processing, scheduling, and patient
 communication. Your clinical staff stays focused on care.
+
+**Enterprise-grade security.** Solum is built for healthcare from day one. HIPAA-compliant
+infrastructure, SOC 2 controls, encrypted data at rest and in transit, role-based access,
+and audit trails across every workflow. Your patient data never touches a system that
+wasn't designed for it.
+
+**Backed by top healthcare operators and funds.** Solum is backed by Y Combinator (S22)
+and investors who operate in healthcare: Wisdom Venture, BAM Capital, Lionheart, Rebel
+Fund, Liquid2, and Founders Club. Our investors aren't just writing checks — they bring
+operational expertise, payer relationships, and industry access that accelerate the
+product and our customers' outcomes.
+
+**Forward-deploy team for successful implementation.** We don't hand you a login and
+disappear. Solum deploys a dedicated implementation team that works alongside your staff
+to configure workflows, map payer rules, integrate your systems, and train your team.
+We stay hands-on through go-live and the first 30 days of production to make sure the
+numbers land where they should.
 
 {Add a paragraph specific to this prospect's situation — connect their top 1-2 pain
 points from Section 2 to what Solum actually does for practices like theirs. Reference
@@ -531,17 +550,59 @@ If a data source is unavailable or returns no results:
 | No volume data from any source | Mark all volume fields as "TBD" and flag: "Business case cannot be completed without volume data from prospect" |
 | No pricing discussed yet | Use standard Solum pricing tiers based on estimated company size. Note "Pricing not yet discussed with prospect" |
 
-## Quick Reference: Solum Pricing Tiers
+## Quick Reference: Solum Pricing (2026)
 
-| Tier | Monthly | Best For |
-|------|---------|----------|
-| Growth | $500/mo | Small practices, <200 clients |
-| Scale | $2,500/mo | Mid-size, 200-1,000 clients |
-| Enterprise | Custom | Large orgs, 1,000+ clients, flat-rate |
-| Per-unit | Varies | Volume-based, typically $2-8/unit depending on service |
+Source: `~/Documents/Claude/solum-ops/sow/solum-pricing-2026.pptx` (updated April 2026)
 
-Implementation fees: typically $0-2,500 depending on integration complexity.
-Free trial: available for Growth tier, 2-4 week test period.
+### Authorization & Claim Follow-Up
+
+| Monthly Commitment | Prior Auth (End-to-End) | Claim/PA Follow-Up |
+|-------------------|------------------------|-------------------|
+| $500 | $16/unit | $4/unit |
+| $1,500 | $12/unit | $3.50/unit |
+| $5,000 | $10/unit | $3/unit |
+| $15,000+ | $8/unit | $2.50/unit |
+| Enterprise | Custom | Custom |
+
+Includes: document retrieval & AI classification, pre-submission QA & payer validation,
+payer submission (API, portal, fax), follow-up until resolution, OCR extraction,
+result posting to EHR/CRM.
+
+### Referral Management & Document Processing
+
+| Volume (docs/month) | Cost per Document | Extra Page (>10 pages) |
+|--------------------|-------------------|----------------------|
+| 99 – 999 | $1.50 | $0.05 |
+| 1K – 5K | $0.80 | $0.045 |
+| 5K – 10K | $0.60 | $0.04 |
+| 10K – 20K | $0.45 | $0.035 |
+| 20,000+ | Enterprise | Custom |
+
+Includes: AI document type identification, data extraction & classification,
+structured output delivery, multi-format support (fax, email, portal), error detection,
+EHR/CRM posting.
+
+### AI Insurance Verification
+
+| Monthly Commitment | Eligibility Check | Benefit Check | Insurance Monitoring | Eligibility (Self-Serve) |
+|-------------------|-------------------|---------------|---------------------|------------------------|
+| $500 | $1.50 | $6.00 | $0.75 | $0.35 |
+| $1,500 | $0.80 | $5.50 | $0.60 | $0.25 |
+| $5,000 | $0.30 | $4.50 | $0.30 | $0.20 |
+| $15,000+ | $0.25 | $3.50 | $0.20 | $0.15 |
+| Enterprise | Custom | Custom | Custom | Custom |
+
+Self-serve: direct platform access — prospect runs eligibility checks on demand at lower rate.
+
+Includes: real-time payer connectivity, coverage & copay details, deductible & out-of-pocket
+info, auth requirement detection, structured response data, audit trail.
+
+### General
+
+- **Implementation fee**: $2,000 one-time (EHR integration, payer mapping, team onboarding)
+- **API usage**: not included in per-unit pricing
+- **Higher commitment tiers**: unlock lower per-unit rates across all services
+- **All commitment tiers**: monthly
 
 ## Important Notes
 
