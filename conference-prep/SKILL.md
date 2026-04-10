@@ -1,12 +1,11 @@
 ---
 name: conference-prep
 description: >
-  Full conference preparation workflow with two parallel tracks: (1) Lead intelligence pipeline
-  that extracts attendees, classifies ICPs, enriches contacts via Apollo-first waterfall
+  Full conference preparation workflow in 7 sequential phases with user checkpoints between
+  each phase. Extracts attendees, classifies ICPs, enriches contacts via Apollo-first waterfall
   (Apollo → Crustdata → Hunter.io finder), validates ALL emails through Hunter.io verifier,
-  outputs three ICP lists (Attendees, Non-Attendees, Participating Companies), and uploads
-  validated leads to Instantly via API; (2) Branded curated agenda document with pre-execution
-  data verification, top session picks, "Why attend" insights, and JP Montoya contact info.
+  outputs three ICP lists (Attendees, Non-Attendees, Participating Companies), uploads
+  validated leads to Instantly, and generates a branded curated agenda document.
   Use this skill whenever the user mentions conference prep, conference preparation, conference
   intro, pre-conference planning, "who's going to [conference]", attendee enrichment, conference
   prospecting, attendee list analysis, pre-conference research, or any request involving
@@ -16,8 +15,8 @@ description: >
 
 # Conference Prep
 
-Two parallel tracks that run together: build your prospect lists AND know exactly where to
-spend your time at the event.
+Seven sequential phases, each with a checkpoint where the user reviews results before
+proceeding. This ensures every phase lands correctly and nothing compounds downstream.
 
 ## Core Principle
 
@@ -44,6 +43,8 @@ clients and prospects as a value-add.
    emails are included. Do NOT send null or empty email strings to the verifier.
 6. **Three output lists**: ICP Attendees, ICP Non-Attendees, ICP from Participating
    Companies. These are distinct populations with no overlap.
+7. **Phase-gated execution**: NEVER proceed to the next phase without user confirmation.
+   Each phase ends with a checkpoint summary and the question: "Ready for Phase [N+1]?"
 
 ## API Configuration
 
@@ -60,54 +61,79 @@ execution. Expected keys:
 If a key is missing, ask the user before proceeding. Use the api-key-manager skill to store
 any newly provided keys.
 
-## The Workflow
+---
 
-### Phase 0: Conference Confirmation
+## Phase 1: Conference Confirmation & Setup
 
-Before anything else, confirm the conference details with the user:
+**Goal**: Confirm the right conference, verify all tools are connected, create project folder.
+
+### Steps
+
 1. Ask for the conference name if not provided
 2. Search the web for: official website, dates, location, agenda URL, attendee/sponsor list URL
 3. Present what you found and confirm: "Is this the right conference? [Name], [Dates], [Location]"
 4. Ask the user for their attendee data source (screenshot, PDF, CSV, URL, or "I don't have one yet")
 5. Create the project output folder: `~/Documents/Claude/[ConferenceName]-[Year]/`
-6. Read `~/.claude/.api-keys.json` and verify all required API keys are present (Crustdata,
-   Hunter.io, Instantly). Apollo uses MCP tools. If any key is missing, ask the user now.
+6. Read `~/.claude/.api-keys.json` and verify all required API keys are present:
+   - Apollo MCP tools: test with a simple search
+   - Crustdata: verify key exists
+   - Hunter.io: verify key exists
+   - Instantly: verify key exists
+7. Report any missing keys and resolve before proceeding
 
-Only proceed after confirmation. Getting the wrong conference wastes everything downstream.
+### Checkpoint 1
 
-### Phase 1: Parallel Execution
+Present to user:
+```
+✅ Phase 1 Complete — Conference Confirmed
 
-Launch Track A and Track B simultaneously. They don't depend on each other.
+Conference: [Name]
+Dates: [Dates]
+Location: [Venue, City]
+Agenda URL: [URL]
+Attendee source: [format provided]
+Project folder: ~/Documents/Claude/[ConferenceName]-[Year]/
+
+API Status:
+  Apollo MCP:  ✅ Connected
+  Crustdata:   ✅ Key found
+  Hunter.io:   ✅ Key found
+  Instantly:   ✅ Key found
+
+Ready for Phase 2? (Extract & classify attendees)
+```
+
+**STOP and wait for user confirmation before proceeding.**
 
 ---
 
-#### Track A: Lead Intelligence Pipeline
+## Phase 2: Extract Attendees & Classify ICPs
 
-Run as a Task agent. This is the heavy lift. Read `references/icp-criteria.md` for the full
-ICP classification rules.
+**Goal**: Parse the attendee data, classify everyone against ICP criteria, produce a
+clean list of who matters.
 
-Initialize the processing ledger at the start of Track A.
+### Steps
 
-**Step A1 — Extract Attendees**
+**2.1 — Extract Attendees**
 
 Handle whatever input format the user provides:
 - **Screenshot/Image**: Read the image directly (Claude has vision). Extract every name, title,
-  and company visible. If the image is a conference app screenshot, attendee directory, or
-  badge photo, parse accordingly.
+  and company visible.
 - **PDF**: Read the PDF and extract attendee data.
 - **CSV/Text list**: Parse directly.
 - **URL**: Fetch the page and extract attendee data.
-- **No list available**: Skip to Step A4 (company prospecting only). Mark A1-A3 as skipped.
+- **No list available**: Skip extraction, note that Phase 3 will rely on company prospecting only.
 
 Output a structured list: `[{first_name, last_name, title, company, source: "attendee_list"}]`
 
 Also extract all company names from the conference sponsor list, exhibitor list, and attendee
-company names. Store these as the `participating_companies` list for use in A4.
+company names. Store these as the `participating_companies` list.
 
-**Step A2 — ICP Classification**
+**2.2 — ICP Classification**
 
-For each extracted attendee, classify against Solum Health's ICP criteria (see
-`references/icp-criteria.md`). Assign:
+Read `references/icp-criteria.md` for the full ICP classification rules.
+
+For each extracted attendee, classify against Solum Health's ICP criteria. Assign:
 - **ICP Match**: Yes / No / Maybe
 - **ICP Tier**: Primary / Secondary / Not ICP
 - **Role Category**: Practice Owner, C-Suite, VP/Director Ops, Clinic Manager, Billing/RCM,
@@ -117,82 +143,114 @@ For each extracted attendee, classify against Solum Health's ICP criteria (see
   PE-Backed Platform, Other Healthcare
 - **Reason**: Brief explanation of why they are/aren't ICP
 
-Only proceed to enrichment for ICP Match = Yes or Maybe. Skip "No" entirely to save API calls.
-Add each ICP/Maybe contact to the ledger with `list_assignment: "icp_attendees"`.
+Initialize the processing ledger. Add each ICP/Maybe contact with
+`list_assignment: "icp_attendees"`.
 
-**Empty-set guard**: If zero contacts match ICP = Yes or Maybe, skip A3-A6 for attendees.
-Report to user: "No ICP matches found in the attendee list. Proceeding with company
-prospecting only (A4)."
+### Checkpoint 2
 
-**Step A3 — Apollo Enrichment (Contact-Level, ICPs Only)**
+Present to user:
+```
+✅ Phase 2 Complete — Attendees Extracted & Classified
 
-Apollo is the PRIMARY enrichment source. Use Apollo MCP tools for contact-level enrichment
-of each ICP match. The goal: get verified contact info, company size, and context.
+Total attendees extracted: [N]
+ICP matches (Yes): [N] — [list names + companies]
+ICP matches (Maybe): [N] — [list names + companies]
+Not ICP: [N] (skipped)
 
-For each ICP person:
-1. First try `apollo_people_match` with their first_name, last_name, and company domain
-   (or company name if domain unknown)
+Companies identified for prospecting: [N]
+Sponsor/exhibitor companies: [N]
+
+Proceeding to Phase 3 will use Apollo API credits to enrich [X] contacts.
+Estimated Apollo calls: [N people searches] + [N org enrichments]
+
+Ready for Phase 3? (Apollo enrichment)
+```
+
+**STOP and wait for user confirmation before proceeding.**
+
+---
+
+## Phase 3: Apollo Enrichment & Company Prospecting
+
+**Goal**: Enrich all ICP contacts via Apollo, find C-level non-attendees at attendee
+companies, and prospect sponsor/exhibitor companies. This is the heaviest API phase.
+
+### Steps
+
+**3.1 — Apollo Contact Enrichment (ICPs from Phase 2)**
+
+For each ICP person (Yes or Maybe):
+1. First try `apollo_people_match` with first_name, last_name, and company domain
 2. If no match, try `apollo_mixed_people_api_search` with name + company name
-3. Extract and store: **email, phone, LinkedIn URL**, current title, company size, company revenue
+3. Extract and store: **email, phone, LinkedIn URL**, current title, company size, revenue
 
-For efficiency with large lists (10+ people), use `apollo_people_bulk_match` instead of
-individual calls.
+For lists with 10+ people, use `apollo_people_bulk_match` for efficiency.
 
-Also run `apollo_organizations_enrich` on each unique company to get:
-- Employee count, revenue range, industry classification
-- This helps refine ICP scoring (a solo practice vs. a 200-person group matters)
+Also run `apollo_organizations_enrich` on each unique company for employee count, revenue,
+industry classification.
 
-Update the ledger: mark `apollo: done` for each contact. Record which fields were found
-(email, phone, linkedin) and which are still missing.
+Update ledger: mark `apollo: done` for each contact.
 
-**Step A3b — Post-Enrichment Reclassification**
+**3.2 — Post-Enrichment Reclassification**
 
-After Apollo enrichment reveals company details (employee count, revenue, industry), re-evaluate
-all "Maybe" contacts:
-- If the company turns out to be a solo practice (<5 providers) or outside behavioral health,
-  reclassify to "Not ICP" and remove from enrichment pipeline.
-- If the company confirms as a fit (5+ providers, behavioral health), upgrade to ICP = Yes.
-- This prevents wasting waterfall API calls on contacts that don't qualify.
+Re-evaluate all "Maybe" contacts using enriched company data:
+- Solo practice (<5 providers) or outside behavioral health → reclassify to "Not ICP", remove
+- Company confirms as a fit (5+ providers, behavioral health) → upgrade to ICP = Yes
 
-**Step A4 — Company Prospecting + ICP Non-Attendees**
+**3.3 — ICP Non-Attendees (C-levels at attendee companies)**
 
-This step produces TWO populations:
-1. **ICP Non-Attendees**: C-level/senior contacts at companies whose employees ARE on the
-   attendee list, but these specific people are NOT on the attendee list themselves.
-2. **ICP from Participating Companies**: ICP contacts at sponsor/exhibitor companies.
-
-**Part A4a — ICP Non-Attendees (C-levels at attendee companies)**
-
-For each unique company from the attendee list (Step A1):
-1. Run `apollo_mixed_people_api_search` filtered by ICP titles at that company:
-   Search for: "CEO", "COO", "CFO", "Owner", "Founder", "President", "VP Operations",
+For each unique company from the attendee list:
+1. Run `apollo_mixed_people_api_search` filtered by ICP titles:
+   "CEO", "COO", "CFO", "Owner", "Founder", "President", "VP Operations",
    "Director of Operations"
-2. Cross-reference results against the original attendee list from A1. EXCLUDE anyone
-   already on the attendee list (by name match).
+2. Cross-reference against the original attendee list. EXCLUDE anyone already on it.
 3. Classify remaining people against ICP criteria.
 4. ICP matches go into ledger with `list_assignment: "icp_non_attendees"`.
 
-**Part A4b — ICP from Participating Companies (sponsors/exhibitors)**
+**3.4 — ICP from Participating Companies (sponsors/exhibitors)**
 
-For each company from the sponsor/exhibitor list that looks like it could be in behavioral
-health / therapy / healthcare operations (and is NOT already covered in A4a):
+For each sponsor/exhibitor company in behavioral health / therapy / healthcare ops
+(not already covered in 3.3):
 1. Run `apollo_mixed_companies_search` to find the company
-2. Run `apollo_organizations_enrich` to get company details
-3. Run `apollo_mixed_people_api_search` filtered by ICP titles at that company
-4. Classify found people against ICP criteria
-5. ICP matches go into ledger with `list_assignment: "icp_participating_companies"`.
+2. Run `apollo_organizations_enrich` for company details
+3. Run `apollo_mixed_people_api_search` filtered by ICP titles
+4. Classify and add to ledger with `list_assignment: "icp_participating_companies"`
 
-Update ledger: mark `apollo: done` for all new contacts from A4.
+### Checkpoint 3
 
-**Step A5 — Waterfall Enrichment for Gaps**
+Present to user:
+```
+✅ Phase 3 Complete — Apollo Enrichment Done
 
-After Apollo (A3 + A4), check the ledger for contacts missing email, phone, or LinkedIn.
-Run the waterfall ONLY for contacts with gaps. Never re-process contacts that already have
-complete data from Apollo.
+ICP Attendees enriched: [N]
+  - With email: [N]  |  Missing email: [N]
+  - With phone: [N]  |  With LinkedIn: [N]
+  - Reclassified from Maybe → Not ICP: [N] (removed)
 
-**Waterfall order:**
+ICP Non-Attendees found: [N] (C-levels at attendee companies)
+  - With email: [N]  |  Missing email: [N]
 
-**5a. Crustdata People Enrichment**
+ICP from Participating Companies: [N]
+  - With email: [N]  |  Missing email: [N]
+
+Total contacts needing waterfall enrichment (missing email/phone/LinkedIn): [N]
+Estimated Crustdata calls: [N]
+Estimated Hunter.io finder calls: [N]
+
+Ready for Phase 4? (Waterfall enrichment + email validation)
+```
+
+**STOP and wait for user confirmation before proceeding.**
+
+---
+
+## Phase 4: Waterfall Enrichment & Email Validation
+
+**Goal**: Fill gaps from Apollo using Crustdata and Hunter.io, then validate ALL emails.
+
+### Steps
+
+**4.1 — Crustdata People Enrichment**
 
 For contacts missing email OR phone OR LinkedIn after Apollo:
 
@@ -208,13 +266,11 @@ Body: {
 }
 ```
 
-Note: If the endpoint returns 404, try `/screener/people/search` as a fallback. Crustdata's
-API versions vary. Log which endpoint worked for future calls in this session.
+Note: If endpoint returns 404, try `/screener/people/search` as fallback. Log which worked.
 
-Extract any email, phone, or LinkedIn URL from the response that Apollo did not provide.
-Update ledger: mark `crustdata: done`. Record newly found fields.
+Skip if Apollo already found all three fields. Update ledger: mark `crustdata: done`.
 
-**5b. Hunter.io Email Finder**
+**4.2 — Hunter.io Email Finder**
 
 For contacts STILL missing email after Apollo AND Crustdata:
 
@@ -222,80 +278,92 @@ For contacts STILL missing email after Apollo AND Crustdata:
 GET https://api.hunter.io/v2/email-finder?domain={COMPANY_DOMAIN}&first_name={FIRST}&last_name={LAST}&api_key={HUNTER_KEY}
 ```
 
-This is the email FINDER endpoint (not verifier). It discovers email addresses.
-Extract the email from `response.data.email` if confidence >= 70.
-Update ledger: mark `hunter_finder: done`. Record found email.
+Extract email from `response.data.email` if confidence >= 70.
+Update ledger: mark `hunter_finder: done`.
 
-**Important**: Skip Crustdata if Apollo already found all three fields. Skip Hunter.io finder
-if email was found by Apollo or Crustdata. The ledger prevents any double-processing.
+**4.3 — Email Validation (ALL Emails)**
 
-**Step A6 — Email Validation (ALL Emails)**
+Validate EVERY non-null email through Hunter.io email-verifier, regardless of source.
 
-After the waterfall is complete, validate EVERY email in the ledger through Hunter.io
-email-verifier. This applies to ALL emails regardless of source (Apollo, Crustdata, or
-Hunter.io finder).
+Rules:
+- Do NOT send null, empty, or blank emails. Skip them.
+- Check ledger: if already verified, do not verify again.
+- For lists with 50+ contacts, add 1-second delay between calls (rate limiting).
 
-**Rules:**
-- Do NOT send null, empty, or blank emails to the verifier. Skip them entirely.
-- Check the ledger: if an email has already been verified, do not verify again.
-
-For each non-empty email:
 ```
 GET https://api.hunter.io/v2/email-verifier?email={EMAIL}&api_key={HUNTER_KEY}
 ```
 
 **Keep only**: `status = "valid"` OR `status = "accept_all"`
-**Discard from output**: `status = "invalid"`, `status = "disposable"`, `status = "unknown"`
-**Null email contacts**: Contacts with no email from any source are still valuable for
-in-person targeting at the conference and LinkedIn outreach. Include them in CSV output with
-empty email field and note "No email found — target via LinkedIn or in-person." Do NOT upload
-these to Instantly (Instantly requires a valid email).
+**Discard**: `status = "invalid"`, `status = "disposable"`, `status = "unknown"`
+**Null email contacts**: Include in CSV with empty email field and note
+"No email found — target via LinkedIn or in-person." Do NOT upload to Instantly.
 
-Update ledger: mark `hunter_verifier: done`, record `email_status`.
+### Checkpoint 4
 
-**Step A7 — Output: Three Lists as CSVs**
+Present to user:
+```
+✅ Phase 4 Complete — Enrichment & Validation Done
 
-Produce three CSV files, saved to `~/Documents/Claude/[ConferenceName]-[Year]/`:
+Waterfall enrichment results:
+  Crustdata found data for: [N] contacts
+  Hunter.io finder found emails for: [N] contacts
+
+Email validation results:
+  Total emails validated: [N]
+  Valid / accept_all: [N] ✅
+  Invalid / disposable / unknown: [N] ❌ (removed)
+  No email found: [N] (kept for LinkedIn/in-person)
+
+Emails by source:
+  Apollo: [N]  |  Crustdata: [N]  |  Hunter.io: [N]
+
+Final counts:
+  ICP Attendees (with valid email): [N]
+  ICP Non-Attendees (with valid email): [N]
+  ICP Participating Companies (with valid email): [N]
+
+Ready for Phase 5? (Generate CSVs + upload to Instantly)
+```
+
+**STOP and wait for user confirmation before proceeding.**
+
+---
+
+## Phase 5: Output CSVs & Instantly Upload
+
+**Goal**: Produce the three CSV files and upload validated leads to Instantly campaigns.
+
+### Steps
+
+**5.1 — Output Three CSVs**
+
+Save to `~/Documents/Claude/[ConferenceName]-[Year]/`:
 
 **List 1: `[ConferenceName]_[Year]_ICP_Attendees.csv`**
-Contacts from ledger where `list_assignment = "icp_attendees"` AND email is validated.
-
 Columns: First Name | Last Name | Title | Company | Company Type | ICP Tier | Role Category |
 Email | Email Status | Phone | LinkedIn | Company Size | Company Revenue | Enrichment Sources |
 Notes
 
 **List 2: `[ConferenceName]_[Year]_ICP_Non_Attendees.csv`**
-Contacts from ledger where `list_assignment = "icp_non_attendees"` AND email is validated.
-These are C-levels at attendee companies who are NOT on the attendee list themselves.
-
-Columns: Same as List 1, plus: Source Company (the attendee company that led to them)
+Same columns plus: Source Company
 
 **List 3: `[ConferenceName]_[Year]_ICP_Participating_Companies.csv`**
-Contacts from ledger where `list_assignment = "icp_participating_companies"` AND email validated.
+Same columns plus: Source Company
 
-Columns: Same as List 1, plus: Source Company (sponsor/exhibitor company)
+Also save `[ConferenceName]_[Year]_Processing_Summary.txt` with full breakdown.
 
-Also save a `[ConferenceName]_[Year]_Processing_Summary.txt` with counts and breakdown.
-
-**Step A8 — Instantly Integration**
-
-After CSV output, upload validated leads to Instantly for campaign sequencing.
-
-**8a. Read API key** from `~/.claude/.api-keys.json`.
-
-**8b. Create one campaign per list:**
+**5.2 — Create Instantly Campaigns**
 
 ```
 POST https://api.instantly.ai/api/v2/campaigns
 Headers: Authorization: Bearer {INSTANTLY_KEY}, Content-Type: application/json
-Body: {
-  "name": "[ConferenceName] [Year] - [List Name]"
-}
+Body: { "name": "[ConferenceName] [Year] - [List Name]" }
 ```
 
-Record the `campaign_id` from each response.
+Create one campaign per list (3 total). Record each `campaign_id`.
 
-**8c. Upload leads** to each campaign (max 1000 per request, batch if needed):
+**5.3 — Upload Leads**
 
 ```
 POST https://api.instantly.ai/api/v2/leads/add
@@ -304,67 +372,62 @@ Body: {
   "campaign_id": "{CAMPAIGN_ID}",
   "skip_if_in_workspace": true,
   "skip_if_in_campaign": true,
-  "leads": [
-    {
-      "email": "contact@example.com",
-      "first_name": "Jane",
-      "last_name": "Doe",
-      "company_name": "Acme Health",
-      "custom_variables": {
-        "title": "CEO",
-        "linkedin": "https://linkedin.com/in/janedoe",
-        "phone": "555-123-4567",
-        "icp_tier": "Primary",
-        "role_category": "C-Suite",
-        "company_type": "Behavioral Health",
-        "conference": "[ConferenceName] [Year]",
-        "list_source": "icp_attendees|icp_non_attendees|icp_participating_companies"
-      }
-    }
-  ]
+  "leads": [...]
 }
 ```
 
-Only upload contacts that have a validated email. Skip contacts with no email.
+Max 1000 leads per request. Only upload contacts with validated emails.
+Lead fields: email, first_name, last_name, company_name, custom_variables (title, linkedin,
+phone, icp_tier, role_category, company_type, conference, list_source).
 
-**8d. Log results**: Record leads uploaded per campaign, skipped count, and any errors.
+**5.4 — Verify Upload via API**
 
-**Note on `skip_if_in_workspace`**: This flag skips leads whose email already exists anywhere
-in the Instantly workspace (from prior campaigns). For conference outreach, this is intentional
-to avoid spamming existing contacts. If you want to re-engage existing leads via a new
-conference campaign, set `skip_if_in_workspace: false` and only use `skip_if_in_campaign: true`.
+For each campaign:
+```
+GET https://api.instantly.ai/api/v2/campaigns/{campaign_id}
+Headers: Authorization: Bearer {INSTANTLY_KEY}
+```
+Verify lead count matches what was uploaded.
 
-**Note on sequences**: This skill creates campaigns and uploads leads but does NOT create
-email sequences (templates, follow-up cadence). Sequences must be configured manually in
-Instantly before launching, because email copy requires user review and approval. After
-upload, remind the user: "Leads are loaded. Add your email sequences in Instantly before
-activating the campaigns."
+**Note on sequences**: This skill does NOT create email sequences. Remind user:
+"Leads are loaded. Add your email sequences in Instantly before activating the campaigns."
 
-**Step A9 — Verify Instantly Upload**
+### Checkpoint 5
 
-**Primary: API-based verification** (reliable, no auth issues):
-1. For each campaign created in A8, call:
-   ```
-   GET https://api.instantly.ai/api/v2/campaigns/{campaign_id}
-   Headers: Authorization: Bearer {INSTANTLY_KEY}
-   ```
-2. Check the lead count in the response matches what was uploaded
-3. Report: "Uploaded [X] leads to [Campaign Name]. API verification: [PASS/FAIL]."
+Present to user:
+```
+✅ Phase 5 Complete — CSVs Saved & Leads Uploaded to Instantly
 
-**Optional: UI verification via Playwright** (if user requests visual confirmation):
-1. Navigate to `https://app.instantly.ai` and find the campaigns
-2. Take a screenshot showing lead counts
-3. This requires the user to be logged in — if auth fails, skip and rely on API verification
+Files saved:
+  📄 [ConferenceName]_[Year]_ICP_Attendees.csv ([N] contacts)
+  📄 [ConferenceName]_[Year]_ICP_Non_Attendees.csv ([N] contacts)
+  📄 [ConferenceName]_[Year]_ICP_Participating_Companies.csv ([N] contacts)
+  📄 [ConferenceName]_[Year]_Processing_Summary.txt
+
+Instantly campaigns:
+  "[ConferenceName] [Year] - ICP Attendees" → [N] leads uploaded ✅
+  "[ConferenceName] [Year] - ICP Non-Attendees" → [N] leads uploaded ✅
+  "[ConferenceName] [Year] - ICP Participating Companies" → [N] leads uploaded ✅
+
+⚠️  Add email sequences in Instantly before activating campaigns.
+
+Ready for Phase 6? (Research & curate conference agenda)
+```
+
+**STOP and wait for user confirmation before proceeding.**
 
 ---
 
-#### Track B: Curated Agenda Document
+## Phase 6: Curated Agenda Research & Verification
 
-Run as a Task agent. Read `references/brand-guide.md` for voice and brand guidelines.
-Read the template at `assets/prep-document-template.html` for the exact HTML structure
-and styling to follow.
+**Goal**: Research the full conference agenda, curate the best sessions, verify all data
+for accuracy before generating the document.
 
-**Step B1 — Agenda Research**
+Read `references/brand-guide.md` for voice and brand guidelines.
+
+### Steps
+
+**6.1 — Agenda Research**
 
 Search the web for the conference's full agenda:
 - Session titles, descriptions, times, tracks, locations
@@ -372,12 +435,12 @@ Search the web for the conference's full agenda:
 - Networking events, receptions, breakfasts
 - Any pre-conference workshops or special events
 
-Store all raw agenda data in a structured format for verification in B3.
+Store all raw agenda data in a structured format for verification.
 
-**Step B2 — Session Curation**
+**6.2 — Session Curation**
 
-From the full agenda, select the 6-10 sessions most relevant to behavioral health
-practice owners and operators. Prioritize sessions about:
+Select 6-10 sessions most relevant to behavioral health practice owners/operators.
+Prioritize:
 1. AI and automation in healthcare operations
 2. Revenue cycle, billing, denial management
 3. Payer strategy, value-based care
@@ -390,53 +453,88 @@ practice owners and operators. Prioritize sessions about:
 For each selected session, write a "Why attend" insight paragraph that:
 - Explains why this session matters for a practice owner/operator
 - References specific speakers and what makes their perspective valuable
-- Connects the session topic to real operational impact (revenue, time, margin, growth)
+- Connects to real operational impact (revenue, time, margin, growth)
 - Sounds like a knowledgeable colleague giving advice, not a summary
 
-**Step B3 — Data Verification Checkpoint**
+**6.3 — Data Verification Checkpoint**
 
-BEFORE generating the HTML document, run a systematic verification pass on all curated data.
-This step catches AI hallucinations and data errors before they reach the final output.
+Run a systematic verification pass on all curated data BEFORE generating the document:
 
-**Verification checks:**
+1. **Speaker verification**: Verify each speaker's name, title, and company against source
+   data. Flag any mismatches or inferred details.
+2. **Session time/location verification**: Cross-reference every time, track, and location
+   against raw agenda data.
+3. **Completeness check**: Every session has title, speaker(s), time, location, "Why attend."
+4. **Consistency check**: Chronological order, correct concurrent session notes, correct dates.
+5. **Content accuracy**: Speaker descriptions match actual roles. No fabricated credentials.
 
-1. **Speaker verification**: For each speaker mentioned in a curated session, verify their
-   name, title, and company against the original source data from B1. Flag any mismatches.
-   If a speaker's name or title was inferred (not directly from source), mark it and attempt
-   web verification.
+**6.4 — Humanization Pass**
 
-2. **Session time/location verification**: Cross-reference every session time, track, and
-   location against the raw agenda data. Ensure no times were transposed or locations swapped.
+QA check on all "Why attend" text:
+- No AI buzzwords (leverage, streamline, robust, comprehensive, cutting-edge, etc.)
+- No dashes as punctuation (use commas, periods, or restructure)
+- Vary sentence length
+- Sound like a practitioner giving advice, not a content marketer
+- No hedging language — be direct
 
-3. **Completeness check**: Verify that every curated session has title, at least one speaker,
-   time, track/location, and "Why attend" paragraph. No day sections empty. Networking events
-   have correct times and locations. No duplicate sessions.
+### Checkpoint 6
 
-4. **Consistency check**: Sessions in chronological order within each day. Concurrent session
-   notes reference the correct sessions. Day labels match actual conference dates.
+Present to user:
+```
+✅ Phase 6 Complete — Agenda Curated & Verified
 
-5. **Content accuracy**: Re-read each "Why attend" paragraph and verify speaker descriptions
-   match their actual roles. No fabricated credentials or inaccurate company descriptions.
+Total sessions in full agenda: [N]
+Sessions selected: [N]
+Networking events included: [N]
 
-**Output**: A verification report noting any corrections made. Fix issues before proceeding.
+Curated sessions:
+  Day 1:
+    • [Time] — [Title] — [Speaker(s)]
+    • [Time] — [Title] — [Speaker(s)]
+  Day 2:
+    • [Time] — [Title] — [Speaker(s)]
+    ...
 
-**Step B4 — Generate Branded HTML Document**
+Verification results:
+  Speaker data verified: [N]/[N] ✅
+  Times/locations verified: [N]/[N] ✅
+  Issues found & fixed: [N]
 
-Generate an HTML file following the template structure in `assets/prep-document-template.html`.
-The document must include:
+[Show the full list of curated sessions with "Why attend" snippets so user can review
+the content before it gets baked into the HTML document]
 
-1. **Header**: Solum Health logo (use CDN AVIF URL from brand guide) + conference title +
+Ready for Phase 7? (Generate branded HTML document)
+```
+
+**STOP and wait for user confirmation before proceeding.**
+
+---
+
+## Phase 7: Generate Branded Agenda Document
+
+**Goal**: Generate the final HTML document and present the complete summary.
+
+Read the template at `assets/prep-document-template.html` for the exact HTML structure
+and styling to follow.
+
+### Steps
+
+**7.1 — Generate Branded HTML Document**
+
+Generate an HTML file following the template structure. Include:
+
+1. **Header**: Solum Health logo (CDN AVIF URL from brand guide) + conference title +
    "Executive Guide for Healthcare Leaders" subtitle + date/venue badge
-2. **Intro paragraph**: 2-3 sentences positioning why this conference matters and what
-   the curated picks focus on. Mention the total number of sessions and how many were selected.
+2. **Intro paragraph**: 2-3 sentences on why this conference matters. Mention total sessions
+   and how many were selected.
 3. **Day sections**: Organized by day with colored day-label pills
-4. **Session cards**: Grid layout with time/track column + content column containing title,
-   speakers, and "Why attend" insight box
-5. **Networking callouts**: Teal-background bars for receptions, lunches, networking breaks
-6. **Concurrent session notes**: When sessions overlap, add a note helping the reader choose
-7. **Footer**: JP Montoya contact card with name, title, email, phone, website
+4. **Session cards**: Grid layout with time/track column + content column (title, speakers,
+   "Why attend" insight box)
+5. **Networking callouts**: Teal-background bars for receptions, lunches, breaks
+6. **Concurrent session notes**: When sessions overlap, help the reader choose
+7. **Footer**: JP Montoya contact card (name, title, email, phone, website)
 
-Brand colors (from brand guide):
+Brand colors:
 - Navy primary: #011C40
 - Accent blue: #468AF7
 - Teal: #70D3C6 / #146055
@@ -444,65 +542,67 @@ Brand colors (from brand guide):
 - Background: #F2F2F9
 - Surface: #ffffff
 
-Font: DM Sans (from Google Fonts) for the HTML version.
+Font: DM Sans (Google Fonts).
 
-**Step B5 — Humanization Pass**
+Save to: `~/Documents/Claude/[ConferenceName]-[Year]/[ConferenceName]_[Year]_Curated_Agenda.html`
 
-Run a quick QA check on all "Why attend" text:
-- No AI buzzwords (leverage, streamline, robust, comprehensive, cutting-edge, innovative,
-  harness, synergy, holistic, etc.)
-- No dashes as punctuation (use commas, periods, or restructure)
-- Vary sentence length
-- Sound like a practitioner giving advice, not a content marketer
-- No hedging language ("might", "could potentially") — be direct
+### Checkpoint 7 — Final Summary
+
+```
+✅ Phase 7 Complete — All Done!
+
+📁 All files in: ~/Documents/Claude/[ConferenceName]-[Year]/
+
+Lead Intelligence:
+  📄 ICP_Attendees.csv — [N] contacts
+  📄 ICP_Non_Attendees.csv — [N] contacts
+  📄 ICP_Participating_Companies.csv — [N] contacts
+  📄 Processing_Summary.txt
+
+Curated Agenda:
+  📄 Curated_Agenda.html — [N] sessions from [Total] total
+
+Instantly Campaigns:
+  🚀 [ConferenceName] [Year] - ICP Attendees ([N] leads)
+  🚀 [ConferenceName] [Year] - ICP Non-Attendees ([N] leads)
+  🚀 [ConferenceName] [Year] - ICP Participating Companies ([N] leads)
+  ⚠️  Add email sequences before activating
+
+Pipeline summary:
+  Total attendees extracted: [N]
+  ICP matches: [N] (Primary: [N], Secondary: [N])
+  Emails by source: Apollo [N] / Crustdata [N] / Hunter.io [N]
+  Emails validated: [N] / [Total] ([%] pass rate)
+  Contacts with no email: [N] (LinkedIn/in-person targets)
+
+Want me to adjust anything? I can re-score ICPs, add/remove sessions,
+change the document style, or re-run enrichment for specific contacts.
+```
 
 ---
 
-### Phase 2: Assembly & Review
-
-Once both tracks complete:
-
-1. Save the curated agenda HTML to `~/Documents/Claude/[ConferenceName]-[Year]/[ConferenceName]_[Year]_Curated_Agenda.html`
-2. All three CSVs should already be saved from A7
-3. Save processing summary from Track A
-4. Open the HTML document for user review
-5. Report:
-   - Total attendees extracted
-   - ICP matches found (breakdown by tier and list)
-   - Emails found per source (Apollo vs. Crustdata vs. Hunter.io finder)
-   - Emails validated vs. failed vs. no email
-   - Leads uploaded to Instantly (per campaign, with verification status)
-   - Number of sessions curated from total agenda
-   - Data verification results from B3
-6. Ask: "Want me to adjust anything? I can re-score ICPs, add/remove sessions, change the
-   document style, or re-run enrichment for specific contacts."
-
 ## Important Notes
 
+- **Phase-gated execution is critical**: Each phase MUST complete and get user approval before
+  the next begins. This prevents cascading errors and wasted API credits. If the user says
+  "run all phases," confirm once then proceed with abbreviated checkpoints (just the summary
+  line, no full stop).
 - **Apollo is primary**: Always try Apollo first. Only use Crustdata and Hunter.io finder
-  as fallbacks for missing data. This saves API credits on secondary sources.
-- **Processing ledger prevents waste**: Every contact is tracked through every step. If you
-  restart or retry, check the ledger first. Never call the same API for the same contact twice.
-- **Hunter.io has two roles**: (1) Email FINDER as a fallback in the waterfall when Apollo and
-  Crustdata fail to find an email. (2) Email VERIFIER for ALL emails regardless of source.
-  These are different endpoints. Do not confuse them.
+  as fallbacks for missing data.
+- **Processing ledger prevents waste**: Every contact is tracked through every step. Never
+  call the same API for the same contact twice.
+- **Hunter.io has two roles**: (1) Email FINDER as a waterfall fallback. (2) Email VERIFIER
+  for ALL emails. Different endpoints. Do not confuse them.
 - **Instantly API**: Use `POST /api/v2/leads/add` (NOT `/leads`). Max 1000 leads per request.
-  Standard campaign settings: text_only, no tracking, Mon-Fri 8am-5pm America/Detroit,
-  daily_limit 30.
-- **Privacy**: The attendee data and enriched lists are for internal sales use only. The
-  curated agenda document is the shareable, client-facing piece.
-- **The agenda document is the value-add**. It positions JP as someone who does homework,
-  curates signal from noise, and shares it generously. That's the rapport builder.
-- **Data verification is not optional**. Step B3 must run before B4. AI-generated session
-  data is prone to hallucination on speaker names and session details. Verify everything.
-- **API error handling**: If an API call fails (timeout, 429 rate limit, 500 error), retry
-  once after 5 seconds. If it fails again, mark the contact as `enrichment_failed` in the
-  ledger and continue with the next contact. Report all failures in the Processing Summary.
-- **Rate limiting**: Hunter.io has per-second and per-month limits. For lists with 50+ contacts,
-  add a 1-second delay between verification calls. Report expected API credit usage before
-  starting A6 so the user can approve the cost.
-- **Empty-set handling**: If a list has zero validated leads after A6, skip Instantly campaign
-  creation for that list. Report it but don't error out.
+- **API error handling**: If an API call fails, retry once after 5 seconds. If it fails again,
+  mark the contact as `enrichment_failed` in the ledger and continue. Report all failures.
+- **Rate limiting**: Hunter.io — add 1-second delay between calls for 50+ contacts. Report
+  expected credit usage before starting Phase 4 so user can approve.
+- **Empty-set handling**: If a list has zero validated leads, skip Instantly campaign creation
+  for that list. Report it but don't error out.
+- **Privacy**: Attendee data and enriched lists are internal only. The curated agenda is the
+  shareable, client-facing piece.
+- **Data verification is not optional**: Phase 6 verification must run before HTML generation.
 
 ## File Dependencies
 
@@ -516,7 +616,6 @@ Once both tracks complete:
 - **Hunter.io**: HTTP API at `https://api.hunter.io/v2` (email-finder + email-verifier)
 - **Instantly**: HTTP API at `https://api.instantly.ai/api/v2`
 - **Web access**: WebSearch + WebFetch for agenda research
-- **Playwright**: Browser tools for Instantly UI verification (Step A9)
 
 ## Output
 
