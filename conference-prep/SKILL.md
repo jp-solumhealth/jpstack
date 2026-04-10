@@ -1,8 +1,10 @@
 ---
 name: conference-prep
 description: >
-  Full conference preparation workflow in 7 sequential phases with user checkpoints between
-  each phase. Extracts attendees, classifies ICPs, enriches contacts via Apollo-first waterfall
+  Full conference preparation workflow with phase-gated execution and parallel tracks.
+  After Phase 2, the agenda document builds in the background while the lead intelligence
+  pipeline continues sequentially through enrichment, validation, and Instantly upload.
+  Extracts attendees, classifies ICPs, enriches contacts via Apollo-first waterfall
   (Apollo → Crustdata → Hunter.io finder), validates ALL emails through Hunter.io verifier,
   outputs three ICP lists (Attendees, Non-Attendees, Participating Companies), uploads
   validated leads to Instantly, and generates a branded curated agenda document.
@@ -15,8 +17,15 @@ description: >
 
 # Conference Prep
 
-Seven sequential phases, each with a checkpoint where the user reviews results before
-proceeding. This ensures every phase lands correctly and nothing compounds downstream.
+Phase-gated workflow with two parallel tracks after Phase 2. The agenda document builds
+in the background while the lead pipeline runs sequentially with user checkpoints.
+
+```
+Phase 1 → Phase 2 → ┬─ Track A: Lead Pipeline (Phases 3→4→5) — sequential with checkpoints
+                     └─ Track B: Agenda Document — background agent, no blocking
+                     
+                     → Phase 6: Final Assembly (both tracks merge)
+```
 
 ## Core Principle
 
@@ -45,6 +54,7 @@ clients and prospects as a value-add.
    Companies. These are distinct populations with no overlap.
 7. **Phase-gated execution**: NEVER proceed to the next phase without user confirmation.
    Each phase ends with a checkpoint summary and the question: "Ready for Phase [N+1]?"
+   Track B (agenda) runs independently and does NOT block the lead pipeline checkpoints.
 
 ## API Configuration
 
@@ -110,7 +120,7 @@ Ready for Phase 2? (Extract & classify attendees)
 ## Phase 2: Extract Attendees & Classify ICPs
 
 **Goal**: Parse the attendee data, classify everyone against ICP criteria, produce a
-clean list of who matters.
+clean list of who matters. After this phase, Track B launches in the background.
 
 ### Steps
 
@@ -163,17 +173,119 @@ Sponsor/exhibitor companies: [N]
 Proceeding to Phase 3 will use Apollo API credits to enrich [X] contacts.
 Estimated Apollo calls: [N people searches] + [N org enrichments]
 
-Ready for Phase 3? (Apollo enrichment)
+⚡ Track B (Curated Agenda) will launch in the background — it doesn't
+   block the lead pipeline. You'll see its results at Phase 6.
+
+Ready for Phase 3? (Apollo enrichment + launch agenda in background)
 ```
 
 **STOP and wait for user confirmation before proceeding.**
 
 ---
 
+## After Phase 2: Launch Track B in Background
+
+**Immediately after the user confirms Phase 2**, launch Track B as a **background agent**.
+This runs independently while the user continues through Phases 3→4→5 (lead pipeline).
+
+Track B does NOT block the lead pipeline. The user interacts with the lead pipeline
+checkpoints while Track B works silently. Track B results surface at Phase 6.
+
+### Track B: Curated Agenda Document (Background Agent)
+
+Launch as a background Task agent with this full context:
+- Conference name, dates, location, agenda URL (from Phase 1)
+- Read `references/brand-guide.md` for voice and brand guidelines
+- Read `assets/prep-document-template.html` for the HTML structure and styling
+
+**B.1 — Agenda Research**
+
+Search the web for the conference's full agenda:
+- Session titles, descriptions, times, tracks, locations
+- Speaker names, titles, companies
+- Networking events, receptions, breakfasts
+- Any pre-conference workshops or special events
+
+Store all raw agenda data in a structured format for verification.
+
+**B.2 — Session Curation**
+
+Select 6-10 sessions most relevant to behavioral health practice owners/operators.
+Prioritize:
+1. AI and automation in healthcare operations
+2. Revenue cycle, billing, denial management
+3. Payer strategy, value-based care
+4. Workforce retention and burnout
+5. Practice growth and scaling
+6. Technology adoption and digital transformation
+7. M&A and consolidation trends
+8. Patient access and intake optimization
+
+For each selected session, write a "Why attend" insight paragraph that:
+- Explains why this session matters for a practice owner/operator
+- References specific speakers and what makes their perspective valuable
+- Connects to real operational impact (revenue, time, margin, growth)
+- Sounds like a knowledgeable colleague giving advice, not a summary
+
+**B.3 — Data Verification**
+
+Run a systematic verification pass on all curated data:
+
+1. **Speaker verification**: Verify each speaker's name, title, and company against source
+   data. Flag any mismatches or inferred details.
+2. **Session time/location verification**: Cross-reference every time, track, and location
+   against raw agenda data.
+3. **Completeness check**: Every session has title, speaker(s), time, location, "Why attend."
+4. **Consistency check**: Chronological order, correct concurrent session notes, correct dates.
+5. **Content accuracy**: Speaker descriptions match actual roles. No fabricated credentials.
+
+**B.4 — Humanization Pass**
+
+QA check on all "Why attend" text:
+- No AI buzzwords (leverage, streamline, robust, comprehensive, cutting-edge, etc.)
+- No dashes as punctuation (use commas, periods, or restructure)
+- Vary sentence length
+- Sound like a practitioner giving advice, not a content marketer
+- No hedging language — be direct
+
+**B.5 — Generate Branded HTML Document**
+
+Generate an HTML file following the template structure in `assets/prep-document-template.html`.
+Include:
+
+1. **Header**: Solum Health logo (CDN AVIF URL from brand guide) + conference title +
+   "Executive Guide for Healthcare Leaders" subtitle + date/venue badge
+2. **Intro paragraph**: 2-3 sentences on why this conference matters. Mention total sessions
+   and how many were selected.
+3. **Day sections**: Organized by day with colored day-label pills
+4. **Session cards**: Grid layout with time/track column + content column (title, speakers,
+   "Why attend" insight box)
+5. **Networking callouts**: Teal-background bars for receptions, lunches, breaks
+6. **Concurrent session notes**: When sessions overlap, help the reader choose
+7. **Footer**: JP Montoya contact card (name, title, email, phone, website)
+
+Brand colors:
+- Navy primary: #011C40
+- Accent blue: #468AF7
+- Teal: #70D3C6 / #146055
+- Accent BG: #E5DFF4
+- Background: #F2F2F9
+- Surface: #ffffff
+
+Font: DM Sans (Google Fonts).
+
+Save to: `~/Documents/Claude/[ConferenceName]-[Year]/[ConferenceName]_[Year]_Curated_Agenda.html`
+
+**Track B is complete when the HTML file is saved.** Results surface at Phase 6.
+
+---
+
 ## Phase 3: Apollo Enrichment & Company Prospecting
 
 **Goal**: Enrich all ICP contacts via Apollo, find C-level non-attendees at attendee
-companies, and prospect sponsor/exhibitor companies. This is the heaviest API phase.
+companies, and prospect sponsor/exhibitor companies.
+
+*Track B (agenda) is running in the background while this phase executes.*
 
 ### Steps
 
@@ -236,6 +348,8 @@ ICP from Participating Companies: [N]
 Total contacts needing waterfall enrichment (missing email/phone/LinkedIn): [N]
 Estimated Crustdata calls: [N]
 Estimated Hunter.io finder calls: [N]
+
+🔄 Track B (Agenda) status: [running / complete]
 
 Ready for Phase 4? (Waterfall enrichment + email validation)
 ```
@@ -322,6 +436,8 @@ Final counts:
   ICP Attendees (with valid email): [N]
   ICP Non-Attendees (with valid email): [N]
   ICP Participating Companies (with valid email): [N]
+
+🔄 Track B (Agenda) status: [running / complete]
 
 Ready for Phase 5? (Generate CSVs + upload to Instantly)
 ```
@@ -411,145 +527,58 @@ Instantly campaigns:
 
 ⚠️  Add email sequences in Instantly before activating campaigns.
 
-Ready for Phase 6? (Research & curate conference agenda)
+🔄 Track B (Agenda) status: [complete ✅ / still running — will show at Phase 6]
+
+Ready for Phase 6? (Final assembly — review agenda + full summary)
 ```
 
 **STOP and wait for user confirmation before proceeding.**
 
 ---
 
-## Phase 6: Curated Agenda Research & Verification
+## Phase 6: Final Assembly & Review
 
-**Goal**: Research the full conference agenda, curate the best sessions, verify all data
-for accuracy before generating the document.
-
-Read `references/brand-guide.md` for voice and brand guidelines.
+**Goal**: Merge both tracks. Present the completed agenda for review and show the
+full summary of everything produced.
 
 ### Steps
 
-**6.1 — Agenda Research**
+**6.1 — Collect Track B Results**
 
-Search the web for the conference's full agenda:
-- Session titles, descriptions, times, tracks, locations
-- Speaker names, titles, companies
-- Networking events, receptions, breakfasts
-- Any pre-conference workshops or special events
+If Track B (background agent) has completed:
+- Read the generated HTML file
+- Present the curated session list for user review
 
-Store all raw agenda data in a structured format for verification.
+If Track B is still running:
+- Wait for it to complete (it should be done by now — agenda research is typically faster
+  than the full enrichment pipeline)
+- Report: "Waiting for agenda document to finish..."
 
-**6.2 — Session Curation**
+**6.2 — Agenda Review**
 
-Select 6-10 sessions most relevant to behavioral health practice owners/operators.
-Prioritize:
-1. AI and automation in healthcare operations
-2. Revenue cycle, billing, denial management
-3. Payer strategy, value-based care
-4. Workforce retention and burnout
-5. Practice growth and scaling
-6. Technology adoption and digital transformation
-7. M&A and consolidation trends
-8. Patient access and intake optimization
-
-For each selected session, write a "Why attend" insight paragraph that:
-- Explains why this session matters for a practice owner/operator
-- References specific speakers and what makes their perspective valuable
-- Connects to real operational impact (revenue, time, margin, growth)
-- Sounds like a knowledgeable colleague giving advice, not a summary
-
-**6.3 — Data Verification Checkpoint**
-
-Run a systematic verification pass on all curated data BEFORE generating the document:
-
-1. **Speaker verification**: Verify each speaker's name, title, and company against source
-   data. Flag any mismatches or inferred details.
-2. **Session time/location verification**: Cross-reference every time, track, and location
-   against raw agenda data.
-3. **Completeness check**: Every session has title, speaker(s), time, location, "Why attend."
-4. **Consistency check**: Chronological order, correct concurrent session notes, correct dates.
-5. **Content accuracy**: Speaker descriptions match actual roles. No fabricated credentials.
-
-**6.4 — Humanization Pass**
-
-QA check on all "Why attend" text:
-- No AI buzzwords (leverage, streamline, robust, comprehensive, cutting-edge, etc.)
-- No dashes as punctuation (use commas, periods, or restructure)
-- Vary sentence length
-- Sound like a practitioner giving advice, not a content marketer
-- No hedging language — be direct
-
-### Checkpoint 6
-
-Present to user:
+Present the curated sessions to the user for review:
 ```
-✅ Phase 6 Complete — Agenda Curated & Verified
-
-Total sessions in full agenda: [N]
-Sessions selected: [N]
-Networking events included: [N]
-
 Curated sessions:
   Day 1:
     • [Time] — [Title] — [Speaker(s)]
+      Why attend: [first sentence of insight]
     • [Time] — [Title] — [Speaker(s)]
+      Why attend: [first sentence of insight]
   Day 2:
-    • [Time] — [Title] — [Speaker(s)]
     ...
 
 Verification results:
   Speaker data verified: [N]/[N] ✅
   Times/locations verified: [N]/[N] ✅
   Issues found & fixed: [N]
-
-[Show the full list of curated sessions with "Why attend" snippets so user can review
-the content before it gets baked into the HTML document]
-
-Ready for Phase 7? (Generate branded HTML document)
 ```
 
-**STOP and wait for user confirmation before proceeding.**
+Ask: "Want to add, remove, or edit any sessions before finalizing?"
 
----
-
-## Phase 7: Generate Branded Agenda Document
-
-**Goal**: Generate the final HTML document and present the complete summary.
-
-Read the template at `assets/prep-document-template.html` for the exact HTML structure
-and styling to follow.
-
-### Steps
-
-**7.1 — Generate Branded HTML Document**
-
-Generate an HTML file following the template structure. Include:
-
-1. **Header**: Solum Health logo (CDN AVIF URL from brand guide) + conference title +
-   "Executive Guide for Healthcare Leaders" subtitle + date/venue badge
-2. **Intro paragraph**: 2-3 sentences on why this conference matters. Mention total sessions
-   and how many were selected.
-3. **Day sections**: Organized by day with colored day-label pills
-4. **Session cards**: Grid layout with time/track column + content column (title, speakers,
-   "Why attend" insight box)
-5. **Networking callouts**: Teal-background bars for receptions, lunches, breaks
-6. **Concurrent session notes**: When sessions overlap, help the reader choose
-7. **Footer**: JP Montoya contact card (name, title, email, phone, website)
-
-Brand colors:
-- Navy primary: #011C40
-- Accent blue: #468AF7
-- Teal: #70D3C6 / #146055
-- Accent BG: #E5DFF4
-- Background: #F2F2F9
-- Surface: #ffffff
-
-Font: DM Sans (Google Fonts).
-
-Save to: `~/Documents/Claude/[ConferenceName]-[Year]/[ConferenceName]_[Year]_Curated_Agenda.html`
-
-### Checkpoint 7 — Final Summary
+**6.3 — Final Summary**
 
 ```
-✅ Phase 7 Complete — All Done!
+✅ Phase 6 Complete — All Done!
 
 📁 All files in: ~/Documents/Claude/[ConferenceName]-[Year]/
 
@@ -583,10 +612,13 @@ change the document style, or re-run enrichment for specific contacts.
 
 ## Important Notes
 
-- **Phase-gated execution is critical**: Each phase MUST complete and get user approval before
-  the next begins. This prevents cascading errors and wasted API credits. If the user says
-  "run all phases," confirm once then proceed with abbreviated checkpoints (just the summary
-  line, no full stop).
+- **Track B runs in background**: The agenda document (research, curation, verification,
+  HTML generation) launches as a background agent after Phase 2. It does NOT block the
+  lead pipeline. The user continues through Phases 3→4→5 while the agenda builds itself.
+  Results merge at Phase 6.
+- **Phase-gated execution is critical**: Each lead pipeline phase (3, 4, 5) MUST complete
+  and get user approval before the next begins. Track B is exempt from gating — it runs
+  autonomously in the background.
 - **Apollo is primary**: Always try Apollo first. Only use Crustdata and Hunter.io finder
   as fallbacks for missing data.
 - **Processing ledger prevents waste**: Every contact is tracked through every step. Never
@@ -602,7 +634,8 @@ change the document style, or re-run enrichment for specific contacts.
   for that list. Report it but don't error out.
 - **Privacy**: Attendee data and enriched lists are internal only. The curated agenda is the
   shareable, client-facing piece.
-- **Data verification is not optional**: Phase 6 verification must run before HTML generation.
+- **Data verification is not optional**: Track B verification (B.3) must run before HTML
+  generation (B.5).
 
 ## File Dependencies
 
