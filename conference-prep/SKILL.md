@@ -45,8 +45,14 @@ clients and prospects as a value-add.
    enrichment or verification call twice for the same contact.
 3. **No duplicate API calls**: Before calling any enrichment or verification endpoint, check
    the ledger. If a contact already has a result from that source, skip it.
-4. **Output paths**: ALL outputs go to `~/Documents/Claude/[ConferenceName]-[Year]/`. Create
-   the project folder if it does not exist.
+4. **Output paths**: ALL outputs go to `~/Documents/Claude/Conferences/[ConferenceName]-[Year]/`.
+   Create the folder structure on first run:
+   ```
+   ~/Documents/Claude/Conferences/[ConferenceName]-[Year]/
+   ├── leads/              ← ICP CSVs + processing summary
+   ├── agenda/             ← Curated agenda HTML
+   └── logs/               ← Processing ledger, API call log, verification report
+   ```
 5. **Email validation is mandatory**: Every non-null email must pass Hunter.io email-verifier
    before inclusion in any output list. Only `status = "valid"` or `status = "accept_all"`
    emails are included. Do NOT send null or empty email strings to the verifier.
@@ -83,7 +89,10 @@ any newly provided keys.
 2. Search the web for: official website, dates, location, agenda URL, attendee/sponsor list URL
 3. Present what you found and confirm: "Is this the right conference? [Name], [Dates], [Location]"
 4. Ask the user for their attendee data source (screenshot, PDF, CSV, URL, or "I don't have one yet")
-5. Create the project output folder: `~/Documents/Claude/[ConferenceName]-[Year]/`
+5. Create the project output folder with subfolders:
+   ```
+   mkdir -p ~/Documents/Claude/Conferences/[ConferenceName]-[Year]/{leads,agenda,logs}
+   ```
 6. Read `~/.claude/.api-keys.json` and verify all required API keys are present:
    - Apollo MCP tools: test with a simple search
    - Crustdata: verify key exists
@@ -102,7 +111,8 @@ Dates: [Dates]
 Location: [Venue, City]
 Agenda URL: [URL]
 Attendee source: [format provided]
-Project folder: ~/Documents/Claude/[ConferenceName]-[Year]/
+Project folder: ~/Documents/Claude/Conferences/[ConferenceName]-[Year]/
+  ├── leads/    ├── agenda/    └── logs/
 
 API Status:
   Apollo MCP:  ✅ Connected
@@ -274,7 +284,7 @@ Brand colors:
 
 Font: DM Sans (Google Fonts).
 
-Save to: `~/Documents/Claude/[ConferenceName]-[Year]/[ConferenceName]_[Year]_Curated_Agenda.html`
+Save to: `~/Documents/Claude/Conferences/[ConferenceName]-[Year]/agenda/curated-agenda.html`
 
 **Track B is complete when the HTML file is saved.** Results surface at Phase 6.
 
@@ -454,20 +464,20 @@ Ready for Phase 5? (Generate CSVs + upload to Instantly)
 
 **5.1 — Output Three CSVs**
 
-Save to `~/Documents/Claude/[ConferenceName]-[Year]/`:
+Save to `~/Documents/Claude/Conferences/[ConferenceName]-[Year]/leads/`:
 
-**List 1: `[ConferenceName]_[Year]_ICP_Attendees.csv`**
+**List 1: `icp-attendees.csv`**
 Columns: First Name | Last Name | Title | Company | Company Type | ICP Tier | Role Category |
 Email | Email Status | Phone | LinkedIn | Company Size | Company Revenue | Enrichment Sources |
 Notes
 
-**List 2: `[ConferenceName]_[Year]_ICP_Non_Attendees.csv`**
+**List 2: `icp-non-attendees.csv`**
 Same columns plus: Source Company
 
-**List 3: `[ConferenceName]_[Year]_ICP_Participating_Companies.csv`**
+**List 3: `icp-participating-companies.csv`**
 Same columns plus: Source Company
 
-Also save `[ConferenceName]_[Year]_Processing_Summary.txt` with full breakdown.
+Also save `~/Documents/Claude/Conferences/[ConferenceName]-[Year]/logs/processing-summary.txt` with full breakdown.
 
 **5.2 — Create Instantly Campaigns**
 
@@ -580,7 +590,7 @@ Ask: "Want to add, remove, or edit any sessions before finalizing?"
 ```
 ✅ Phase 6 Complete — All Done!
 
-📁 All files in: ~/Documents/Claude/[ConferenceName]-[Year]/
+📁 All files in: ~/Documents/Claude/Conferences/[ConferenceName]-[Year]/
 
 Lead Intelligence:
   📄 ICP_Attendees.csv — [N] contacts
@@ -652,14 +662,19 @@ change the document style, or re-run enrichment for specific contacts.
 
 ## Output
 
-Default output directory: `~/Documents/Claude/[ConferenceName]-[Year]/`
+Default output directory: `~/Documents/Claude/Conferences/[ConferenceName]-[Year]/`
 
-Files produced:
-- `[ConferenceName]_[Year]_Curated_Agenda.html`
-- `[ConferenceName]_[Year]_ICP_Attendees.csv`
-- `[ConferenceName]_[Year]_ICP_Non_Attendees.csv`
-- `[ConferenceName]_[Year]_ICP_Participating_Companies.csv`
-- `[ConferenceName]_[Year]_Processing_Summary.txt`
+```
+[ConferenceName]-[Year]/
+├── leads/
+│   ├── icp-attendees.csv
+│   ├── icp-non-attendees.csv
+│   └── icp-participating-companies.csv
+├── agenda/
+│   └── curated-agenda.html
+└── logs/
+    └── processing-summary.txt
+```
 
 Instantly campaigns created:
 - "[ConferenceName] [Year] - ICP Attendees"
