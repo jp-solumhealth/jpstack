@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Solum Health x {{TARGET_NAME}} — Opportunity Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  @page { margin: 0; size: 8.5in 11in; }
+  @media print { .page { box-shadow: none; } }
+
+  :root {
+    --navy: #011C40;
+    --light-gray: #F2F2F9;
+    --blue: #468AF7;
+    --lavender: #E5DFF4;
+    --teal: #70D3C6;
+    --purple: #A16CF4;
+    --dark-teal: #146055;
+    --deep-purple: #462E7D;
+    --near-white: #F9F9F9;
+    --text: #111111;
+    --white: #FFFFFF;
+    --muted: #4F5B6B;
+    --border: #E4E6EF;
+  }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  html, body {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--light-gray);
+    line-height: 1.5;
+  }
+  .page {
+    width: 8.5in;
+    height: 11in;
+    margin: 0 auto;
+    padding: 0.3in 0.42in 0.24in;
+    background: var(--white);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+  }
+  .page > .ftr-wrap { margin-top: auto; }
+
+  /* Header */
+  .hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hdr img.logo {
+    height: 38px;
+    width: auto;
+    display: block;
+  }
+  .hdr .meta {
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 0.6px;
+    color: var(--muted);
+    text-transform: uppercase;
+    text-align: right;
+    line-height: 1.6;
+  }
+  .hdr .meta b { color: var(--navy); font-weight: 700; }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, #011C40 0%, #062a5b 55%, #0e3f7a 100%);
+    color: var(--white);
+    padding: 10px 22px 11px;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    right: -60px; top: -60px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(70,138,247,0.32) 0%, rgba(161,108,244,0.14) 55%, transparent 72%);
+    border-radius: 50%;
+  }
+  .hero .kicker {
+    font-size: 9.5px;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 500;
+    margin-bottom: 5px;
+  }
+  .hero h1 {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.3;
+    color: var(--white);
+    max-width: 720px;
+  }
+  .hero .underline {
+    display: inline-block;
+    position: relative;
+    padding-bottom: 2px;
+  }
+  .hero .underline::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--blue), var(--purple));
+    border-radius: 2px;
+  }
+  .hero p {
+    margin-top: 8px;
+    font-size: 11px;
+    line-height: 1.55;
+    color: #D7DEE9;
+    max-width: 720px;
+  }
+
+  /* Section title */
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title h2 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .section-title .line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+  }
+  .section-title .pill {
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--lavender);
+    color: var(--deep-purple);
+  }
+
+  /* Overview stats */
+  .overview {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .stat {
+    background: var(--near-white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px 8px;
+  }
+  .stat .label {
+    font-size: 9px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .stat .value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-top: 4px;
+    letter-spacing: -0.3px;
+    line-height: 1.25;
+  }
+  .stat .sub {
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+
+  /* Trusted by (client logos strip) */
+  .trust {
+    background: var(--near-white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .trust .tlabel {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--navy);
+    white-space: nowrap;
+    border-right: 1px solid var(--border);
+    padding-right: 14px;
+    line-height: 1.3;
+  }
+  .trust .tlabel span {
+    display: block;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.3px;
+    font-size: 8.5px;
+    text-transform: none;
+    margin-top: 2px;
+  }
+  .trust .logos {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    flex: 1;
+    gap: 10px;
+  }
+  .trust .logos img {
+    height: 26px;
+    width: auto;
+    max-width: 90px;
+    object-fit: contain;
+    filter: grayscale(100%) opacity(0.78);
+  }
+
+  /* Opportunity cards */
+  .opps-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-auto-rows: 1fr;
+    gap: 9px;
+  }
+  .opps-grid .opp:nth-child(1) { grid-column: 1 / span 2; grid-row: 1; }
+  .opps-grid .opp:nth-child(2) { grid-column: 3 / span 2; grid-row: 1; }
+  .opps-grid .opp:nth-child(3) { grid-column: 5 / span 2; grid-row: 1; }
+  .opps-grid .opp:nth-child(4) { grid-column: 2 / span 2; grid-row: 2; }
+  .opps-grid .opp:nth-child(5) { grid-column: 4 / span 2; grid-row: 2; }
+
+  .opp {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--blue);
+    border-radius: 8px;
+    padding: 10px 13px 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .opp-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .opp .chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 21px;
+    height: 21px;
+    border-radius: 6px;
+    background: var(--blue);
+    color: var(--white);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+  }
+  .opp .kicker {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    color: var(--blue);
+    text-transform: uppercase;
+  }
+  .opp h3 {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: -0.1px;
+    line-height: 1.3;
+    margin-top: 1px;
+  }
+  .opp .desc {
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+  .opp .metrics {
+    display: flex;
+    gap: 5px;
+    margin-top: auto;
+    padding-top: 3px;
+    flex-wrap: wrap;
+  }
+  .metric {
+    font-size: 9.5px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: var(--light-gray);
+    color: var(--navy);
+    letter-spacing: 0.1px;
+  }
+  .metric.net {
+    background: var(--navy);
+    color: var(--white);
+  }
+
+  /* Franchise callout */
+  .franchise {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 16px;
+    align-items: center;
+    background: linear-gradient(135deg, #011C40 0%, #062a5b 100%);
+    border-radius: 8px;
+    padding: 9px 18px;
+    color: var(--white);
+    position: relative;
+    overflow: hidden;
+  }
+  .franchise::before {
+    content: "";
+    position: absolute;
+    right: -40px; top: -40px;
+    width: 160px; height: 160px;
+    background: radial-gradient(circle, rgba(112,211,198,0.22) 0%, rgba(70,138,247,0.12) 55%, transparent 72%);
+    border-radius: 50%;
+  }
+  .franchise .badge {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--teal);
+    padding: 5px 11px;
+    border: 1px solid rgba(112,211,198,0.35);
+    border-radius: 20px;
+    white-space: nowrap;
+    position: relative;
+    z-index: 1;
+  }
+  .franchise .content { position: relative; z-index: 1; }
+  .franchise h3 {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.1px;
+    margin-bottom: 2px;
+  }
+  .franchise p {
+    font-size: 10.5px;
+    line-height: 1.5;
+    color: #D7DEE9;
+    max-width: 700px;
+  }
+
+  /* Totals band */
+  .totals {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--blue) 55%, var(--purple) 100%);
+    border-radius: 8px;
+    padding: 9px 18px;
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .totals-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255,255,255,0.22);
+  }
+  .totals-head .t-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+  }
+  .totals-head .t-sub {
+    font-size: 9.5px;
+    font-weight: 500;
+    opacity: 0.92;
+    letter-spacing: 0.3px;
+    max-width: 420px;
+    text-align: right;
+  }
+  .totals-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+  .totals-grid .t-item { padding: 3px 0; }
+  .totals-grid .t-item + .t-item {
+    border-left: 1px solid rgba(255,255,255,0.28);
+    padding-left: 14px;
+  }
+  .totals-grid .t-item .lab {
+    font-size: 9.5px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    opacity: 0.92;
+    font-weight: 500;
+  }
+  .totals-grid .t-item .val {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    margin-top: 3px;
+  }
+  .totals-grid .t-item .per {
+    font-size: 9.5px;
+    opacity: 0.85;
+    margin-top: 2px;
+    letter-spacing: 0.2px;
+  }
+
+  /* Footer */
+  .ftr-wrap { margin-top: auto; display: flex; flex-direction: column; }
+  .ftr-wrap .spectrum {
+    height: 2px;
+    background: linear-gradient(90deg, var(--purple), var(--lavender), var(--teal), var(--navy), var(--blue));
+    margin-bottom: 9px;
+    border-radius: 1px;
+  }
+  .ftr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10.5px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .ftr .signoff { display: flex; gap: 12px; align-items: center; }
+  .ftr .avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .ftr .sigtext .name { color: var(--navy); font-weight: 700; font-size: 12px; line-height: 1.2; }
+  .ftr .sigtext .title { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .ftr .sigtext .contact { font-size: 10.5px; color: var(--navy); margin-top: 3px; font-weight: 500; }
+  .ftr .right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+  .ftr .right .cta { color: var(--navy); font-weight: 700; font-size: 11px; }
+  .ftr .right .book-btn {
+    display: inline-block;
+    background: var(--solum-blue, #1E6BF5);
+    color: #fff !important;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    letter-spacing: 0.2px;
+  }
+  .ftr .right .url { font-size: 10px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- Header -->
+    <div class="hdr">
+      <img class="logo" src="logo-solumhealth-dark.svg" alt="SolumHealth" />
+      <div class="meta">
+        Confidential &middot; <b>For {{TARGET_NAME}} Leadership</b><br/>
+        {{DATE}}
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="kicker">Opportunity Brief</div>
+      <h1><span class="underline">{{HERO_NUMBER}}</span> {{HERO_HEADLINE_TAIL}}</h1>
+      <p>{{HERO_SUBHEAD}}</p>
+    </div>
+
+    <!-- What Solum Runs -->
+    <div class="section-title">
+      <h2>What Solum Runs</h2>
+      <span class="pill">EHR-agnostic &middot; Stands up in weeks</span>
+      <div class="line"></div>
+    </div>
+    <div class="overview">
+      <div class="stat">
+        <div class="label">Built For</div>
+        <div class="value">{{STAT1_VALUE}}</div>
+        <div class="sub">{{STAT1_SUB}}</div>
+      </div>
+      <div class="stat">
+        <div class="label">Avg. Customer Recovery</div>
+        <div class="value">$247K per year</div>
+        <div class="sub">Per company, net across every admin workflow.</div>
+      </div>
+      <div class="stat">
+        <div class="label">Deployment</div>
+        <div class="value">Weeks, not quarters</div>
+        <div class="sub">No rip and replace. Works with your current stack.</div>
+      </div>
+    </div>
+
+    <!-- Trusted By -->
+    <div class="trust">
+      <div class="tlabel">Trusted by<span>{{TRUST_SUBLABEL}}</span></div>
+      <div class="logos">
+        {{CLIENT_LOGOS}}
+      </div>
+    </div>
+
+    <!-- Opportunities -->
+    <div class="section-title">
+      <h2>Where the {{HERO_NUMBER}} Sits</h2>
+      <span class="pill">{{OPPS_PILL}}</span>
+      <div class="line"></div>
+    </div>
+
+    <div class="opps-grid">
+      {{OPP_CARDS}}
+    </div>
+
+    <!-- Thesis callout -->
+    <div class="franchise">
+      <div class="badge">{{THESIS_BADGE}}</div>
+      <div class="content">
+        <h3>{{THESIS_HEADLINE}}</h3>
+        <p>{{THESIS_BODY}} <b style="color:#fff;">{{THESIS_CLOSE}}</b></p>
+      </div>
+    </div>
+
+    <!-- Totals -->
+    <div class="totals">
+      <div class="totals-head">
+        <div class="t-title">{{TOTALS_TITLE}}</div>
+        <div class="t-sub">{{TOTALS_SUB}}</div>
+      </div>
+      <div class="totals-grid">
+        <div class="t-item">
+          <div class="lab">Recaptured Revenue</div>
+          <div class="val">{{TOTAL_REVENUE}}</div>
+          <div class="per">per year</div>
+        </div>
+        <div class="t-item">
+          <div class="lab">Cost &amp; Leakage Saved</div>
+          <div class="val">{{TOTAL_SAVED}}</div>
+          <div class="per">per year</div>
+        </div>
+        <div class="t-item">
+          <div class="lab">Combined Upside</div>
+          <div class="val">{{TOTAL_COMBINED}}</div>
+          <div class="per">per year</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="ftr-wrap">
+      <div class="spectrum"></div>
+      <div class="ftr">
+        <div class="signoff">
+          <div class="avatar">JP</div>
+          <div class="sigtext">
+            <div class="name">JP Montoya</div>
+            <div class="title">CEO &amp; Founder, Solum Health</div>
+            <div class="contact">jp@getsolum.com &middot; (628) 276-2659</div>
+          </div>
+        </div>
+        <div class="right">
+          <div class="cta">{{FOOTER_CTA}}</div>
+          <a class="book-btn" href="{{BOOKING_URL}}">{{BOOKING_LABEL}} &rarr;</a>
+          <div class="url">Confidential brief for {{TARGET_NAME}} leadership</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
