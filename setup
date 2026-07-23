@@ -22,9 +22,10 @@ SKILLS=(
   "product-insights"
   "post-conference-fup"
   "weekly-retro"
+  "jpm-equities-pm"
 )
 
-echo "jpstack — installing 14 skills to $SKILLS_DIR"
+echo "jpstack — installing 15 skills to $SKILLS_DIR"
 echo ""
 
 for skill in "${SKILLS[@]}"; do

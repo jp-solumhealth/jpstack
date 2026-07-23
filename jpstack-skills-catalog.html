@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  @page { size: letter; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Montserrat', sans-serif;
+    color: #1a1a2e;
+    padding: 40px 50px 30px;
+    font-size: 13px;
+    line-height: 1.4;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 2.5px solid #4361ee;
+  }
+  .header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #1a1a2e;
+    letter-spacing: -0.5px;
+  }
+  .header .sub {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 4px;
+  }
+  .header .count {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 8px;
+  }
+  .header .count b { color: #4361ee; }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #4361ee;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-top: 18px;
+    margin-bottom: 8px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .skills-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 20px;
+  }
+  .skill {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 5px 0;
+  }
+  .skill .emoji {
+    font-size: 18px;
+    flex-shrink: 0;
+    width: 24px;
+    text-align: center;
+    margin-top: -1px;
+  }
+  .skill .info { flex: 1; }
+  .skill .name {
+    font-weight: 700;
+    font-size: 12px;
+    color: #1a1a2e;
+  }
+  .skill .desc {
+    font-size: 10.5px;
+    color: #6b7280;
+    line-height: 1.35;
+    margin-top: 1px;
+  }
+  .footer {
+    text-align: center;
+    font-size: 10px;
+    color: #9ca3af;
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+  }
+  /* Force page break control */
+  .section-title { page-break-after: avoid; }
+  .skills-grid { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🛠️ jpstack Skills Catalog</h1>
+  <div class="sub">Your AI-powered operating system for running Solum Health</div>
+  <div class="count"><b>26 skills</b> across 7 categories — built for founder-led B2B SaaS</div>
+</div>
+
+<div class="section-title">☀️ Daily Ops & Reporting</div>
+<div class="skills-grid">
+  <div class="skill">
+    <div class="emoji">☕</div>
+    <div class="info">
+      <div class="name">Chief of Staff</div>
+      <div class="desc">Daily CEO briefing. Pulls HubSpot, Fireflies & Apollo for hot deals, action items & priorities.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">📊</div>
+    <div class="info">
+      <div class="name">Investor Report</div>
+      <div class="desc">Monthly investor updates from Sheets KPIs & Fireflies. Branded DOCX with metrics & asks.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">🔍</div>
+    <div class="info">
+      <div class="name">Weekly Retro</div>
+      <div class="desc">Scores your week across deals, calls, content & outreach. Wins, losses & next-week priorities.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">🎯</div>
+    <div class="info">
+      <div class="name">Win-Loss Analysis</div>
+      <div class="desc">Deal analysis from HubSpot + Fireflies. ICP patterns, root causes & competitor tracking.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">💰 Sales Execution</div>
+<div class="skills-grid">
+  <div class="skill">
+    <div class="emoji">🏋️</div>
+    <div class="info">
+      <div class="name">Pricing Coach</div>
+      <div class="desc">Weekly coaching. Extracts pricing moments from calls, scores 1-5 & delivers scripts.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">📋</div>
+    <div class="info">
+      <div class="name">Meeting Prep</div>
+      <div class="desc">Pre-call intel from HubSpot, Fireflies & Apollo. Context, history & talking points.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">📨</div>
+    <div class="info">
+      <div class="name">Meeting Follow-Up</div>
+      <div class="desc">Post-call automation: follow-up email, HubSpot notes & internal debrief.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">📝</div>
+    <div class="info">
+      <div class="name">SOW Builder</div>
+      <div class="desc">Scoped Statements of Work with ROI from Fireflies, HubSpot & Apollo. Branded PDF.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">📣</div>
+    <div class="info">
+      <div class="name">Sales Enablement</div>
+      <div class="desc">Pitch decks, one-pagers, objection docs & demo scripts for your ICP.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">💵</div>
+    <div class="info">
+      <div class="name">Business Case Builder</div>
+      <div class="desc">Branded 1-2 slide PPTX with ROI analysis, before/after comparison & decision metrics.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">🎪 Conferences & Events</div>
+<div class="skills-grid">
+  <div class="skill">
+    <div class="emoji">🗺️</div>
+    <div class="info">
+      <div class="name">Conference Prep</div>
+      <div class="desc">6-phase workflow: extract attendees, classify ICPs, enrich via Apollo, upload to Instantly.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">📰</div>
+    <div class="info">
+      <div class="name">Post-Conference Insights</div>
+      <div class="desc">Branded recap PDFs with stats, insights & role-based action items for prospects.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">🚀</div>
+    <div class="info">
+      <div class="name">Post-Conference Follow-Up</div>
+      <div class="desc">Segments leads HOT/WARM/COOL/COLD, drafts emails & builds sequences.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">🧠 Product & Market Intel</div>
+<div class="skills-grid">
+  <div class="skill">
+    <div class="emoji">🔬</div>
+    <div class="info">
+      <div class="name">Product Insights</div>
+      <div class="desc">Sprint planning intel. Aggregates feature requests, bugs & UX friction. RICE-scores all.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">💡</div>
+    <div class="info">
+      <div class="name">PMF Pulse</div>
+      <div class="desc">7-source intelligence to surface pain points, unmet needs & PMF indicators.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">✍️ Content & Marketing</div>
+<div class="skills-grid">
+  <div class="skill">
+    <div class="emoji">🐦</div>
+    <div class="info">
+      <div class="name">X Healthcare Posts</div>
+      <div class="desc">Viral X posts/threads for Healthcare AI. Operator voice, clear stances & receipts.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">🎠</div>
+    <div class="info">
+      <div class="name">LinkedIn Carousel</div>
+      <div class="desc">Branded 4:5 carousel PDFs (1080x1350px). 8-15 slides with hooks & safe zones.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">✏️</div>
+    <div class="info">
+      <div class="name">Copywriting</div>
+      <div class="desc">Marketing copy for any page. Human tone, no AI jargon, conversion-focused.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">🗓️</div>
+    <div class="info">
+      <div class="name">Content Strategy</div>
+      <div class="desc">Topic clusters, editorial calendar & content plan aligned to your ICP.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">📧</div>
+    <div class="info">
+      <div class="name">Cold Email</div>
+      <div class="desc">B2B cold emails & sequences. Subject lines, openers & CTAs optimized for replies.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">📩</div>
+    <div class="info">
+      <div class="name">Email Sequence</div>
+      <div class="desc">Drip campaigns, nurture flows & lifecycle emails with timing guidance.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">🏥 Website & Compliance</div>
+<div class="skills-grid">
+  <div class="skill">
+    <div class="emoji">🌐</div>
+    <div class="info">
+      <div class="name">Site Review</div>
+      <div class="desc">7-phase SEO + conversion audit. Technical SEO, CRO, intake forms & healthcare checks.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">🏥</div>
+    <div class="info">
+      <div class="name">Prior Auth Review</div>
+      <div class="desc">Automates PA review. Validates NPI, ICD-10, CMS coverage & decides in &lt;5 min.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">✅</div>
+    <div class="info">
+      <div class="name">Fact-Check</div>
+      <div class="desc">Verifies numerical claims. Classifies as CONFIRMED, CLOSE, WRONG or UNVERIFIABLE.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">🎨 Brand & Design</div>
+<div class="skills-grid">
+  <div class="skill">
+    <div class="emoji">🎨</div>
+    <div class="info">
+      <div class="name">Solum Health Brand</div>
+      <div class="desc">Auto-applies brand system (logo, colors, typography) to all Solum outputs.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">📈</div>
+    <div class="info">
+      <div class="name">SEO Audit</div>
+      <div class="desc">Technical SEO, meta tags, on-page issues & ranking diagnostics for any site.</div>
+    </div>
+  </div>
+  <div class="skill">
+    <div class="emoji">💲</div>
+    <div class="info">
+      <div class="name">Pricing Strategy</div>
+      <div class="desc">Pricing tiers, packaging, value metrics & willingness-to-pay frameworks.</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Solum Health · getsolum.com · April 2026</div>
+
+</body>
+</html>
