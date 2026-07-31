@@ -26,6 +26,7 @@
 | `/conference-prep` | Event strategist | Pre-event: enriches attendee list via Apollo, classifies ICPs, builds branded curated agenda. |
 | `/post-conference-insights` | Thought leader | Post-event: branded 1-2 page PDF one-pager with stat cards and action items. Anti-AI detection pass included. |
 | `/post-conference-fup` | Pipeline builder | Post-event: segments contacts HOT/WARM/COOL/COLD, builds tailored sequences, creates deals, tracks conference ROI. |
+| `/precall-brief` | Call prepper | Loop-driven. Detects intro/discovery calls on the HubSpot-synced calendar and builds a branded HTML brief ~12 min before each: deal context, lead source, priorities, payers accepted, places of service, recent signals. |
 | `/prior-auth-review` | Product demo | Automates payer PA review using NPI, ICD-10, CMS Coverage connectors. 30-min review in under 5 minutes. |
 | `/x-healthcare-posts` | Content creator | X posts and threads for Healthcare AI audiences. Operator voice. Optimized for Heavy Ranker algorithm. |
 | `/linkedin-carousel-builder` | Visual content | Branded carousel PDFs (1080x1350, 4:5) with safe zones, mobile typography, Playwright export. |
