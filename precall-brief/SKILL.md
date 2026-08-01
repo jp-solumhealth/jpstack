@@ -98,33 +98,64 @@ Write to the `brief_path` the detector supplied (under
 `~/Documents/Claude/solum-ops/precall-briefs/`). Self-contained single file —
 inline CSS, no external assets except the Google Fonts import.
 
-**Brand:** Montserrat throughout. Navy `#011C40` headers and the time block,
-Solum Blue `#468AF7` for links/accents, page background `#F2F2F9`, white cards,
-Teal `#70D3C6` for positive signals, Purple `#A16CF4` for watch-outs. Never use
-accent colors as large background fills.
+**This is a call plan, not a research report.** JP reads it in the two minutes
+before he joins, on a call that is often only 15 minutes. Anything that does not
+change what he says or asks is cut. Target under 4,000px tall — if it runs
+longer, you are dumping research instead of deciding what matters.
 
-Sections, in this order — the top third must be readable in 30 seconds:
+**Brand** — QA against the `solum-health-brand` skill, which is authoritative:
 
-1. **Header** — company name, call title, start time in ET, minutes until start,
-   attendee names + titles, and the meeting link as a button.
-2. **The 60-second version** — 3 bullets max. Who they are, what they asked for
-   (their words), and the single sharpest question to open with.
-3. **Deal context** — stage, amount, close date, deal age, owner. Plus source:
-   how they arrived, and the first-contact date and channel from Gmail.
-4. **Top priorities** — what this prospect is actually trying to solve, ranked,
-   each traced to a quote or a source. If you have fewer than three real ones,
-   show fewer. Never pad.
-5. **Insurances accepted** — as a tag list. Flag Medicaid plans distinctly, since
-   those carry the heaviest auth burden and are Solum's strongest wedge.
-6. **Places of service** — locations, states, and delivery settings.
-7. **Recent signals** — news, LinkedIn posts, hiring, expansion. Dated.
-8. **Open questions** — what you could NOT verify. This section is mandatory and
-   must never be empty; if everything verified, say what you'd still confirm live.
+- Font `'DM Sans', sans-serif` via the Google Fonts import. (The global CLAUDE.md
+  line naming Montserrat is stale for web/CSS; the brand system and the jpstack
+  README both specify DM Sans.)
+- Navy `#011C40` hero and headings · Solum Blue `#468AF7` accents and rules ·
+  page `#F2F2F9` · white cards · Teal `#70D3C6` positive/wedge · Purple/Lavender
+  `#A16CF4`/`#E5DFF4` warnings. Never an accent as a large background fill.
+- Radius `8px` cards, `20px` pills, `6px` small. Shadow `0 1px 3px rgba(1,28,64,.08)`.
+- `SolumHealth` wordmark top-left of the hero — "Health" in Teal.
+- Section headings are **real headings**: 23px, weight 700, Navy, with an optional
+  grey qualifier beside them. Never tiny uppercase grey labels — those are the
+  page's navigation and must be the strongest text on it after the H1.
+
+Sections, in this order. The order is the point: act first, evidence second.
+
+1. **Hero** — wordmark, company, call type, start time in ET. A pill stating the
+   duration and the posture it forces (e.g. "15 MIN — GO NARROW"). A meta strip:
+   who, role, stage, footprint, source.
+2. **Your call plan** — the whole reason the brief exists, and visually dominant
+   (blue top rule, numbered navy discs). Contains exactly:
+   - **Three questions**, ranked, each with one line on why it matters and what
+     it unlocks. Real questions in quotes, phrased the way he'd say them.
+   - **The angle** (teal panel) — the specific pitch *if* the call goes well, and
+     the concrete next step to propose. Name the motion (usually the free
+     insurance audit) and cite a comparable that recently converted.
+   - **Do not do this** (lavender panel) — the trap. Prior history that would
+     embarrass him, a stakeholder who churned, a competitor already in play.
+     Omit the panel entirely when there is no trap; never pad it.
+3. **Deal context** — stage, amount, close date, created. Flag missing amount or
+   close date as something to set on the call.
+4. **Payer mix** — two columns by state. Medicaid plans in Teal, everything else
+   neutral. Follow with one card of interpretation, not a third list.
+5. **Footprint & signals** — merged. Locations compressed to a single line
+   (count + names inline), delivery settings, hiring, expansion, news. Location
+   names are low-value; never give them a grid of their own.
+
+Open questions belong **inside the call plan as the three questions** — not as a
+trailing section. If a question isn't worth asking live, it isn't worth printing.
 
 Every fact carries its origin inline (`HubSpot`, `Gmail 6/12`, `website`,
-`Apollo`, `LinkedIn`). Anything inferred is labelled **ASSUMPTION**. This is a
-hard rule — JP will read these on a live call and cannot afford an unsourced
-number.
+`Apollo`, `job boards`). Anything inferred is labelled **ASSUMPTION**. This is a
+hard rule — JP reads these on a live call and cannot afford an unsourced number.
+
+**QA before you finish.** Serve the file and screenshot it — do not ship a brief
+you have not looked at:
+```bash
+cd <brief dir> && (python3 -m http.server 8899 &) 
+# then render http://localhost:8899/<file>?v=N  (the ?v= is required; the
+# server sends Last-Modified and the browser will otherwise show a stale page)
+```
+Check: page under ~4,000px, call plan above the fold on a laptop, no section
+wider than the viewport, every claim sourced.
 
 ## Step 4 — Report
 
