@@ -1,0 +1,541 @@
+{
+  "deal": "rbi-ocala",
+  "description": "RBI Private Lending construction loan, three Ocala SFR builds, GC Tro Tech Construction.",
+  "owner": "Coco Global Management, LLC and Lucato Investments, LLC",
+  "contractor": {
+    "name": "TRO TECH CONSTRUCTION, INC.",
+    "descriptor": "a Florida corporation, d/b/a Tro Tech Construction",
+    "address_1": "6179 SW 81st Street",
+    "address_2": "Ocala, Florida 34476",
+    "license": "Florida Certified Building Contractor License No. CBC1250766",
+    "principal": "Jose Ricardo Trochez",
+    "principal_title": "Director",
+    "title_source": "Owner's instruction 5 Aug 2026 \u2014 NOT recorded in any file document. Verify against Sunbiz officer listing before relying on it."
+  },
+  "period": {
+    "from": "20 June 2026",
+    "to": "5 August 2026"
+  },
+  "execution": {
+    "date": "5 August, 2026",
+    "day": "5th",
+    "month": "August",
+    "year": "2026"
+  },
+  "commission_pct": 0.09,
+  "loan": {
+    "face": 589692.07,
+    "disbursed_at_close": 103791.16,
+    "holdback": 485900.91,
+    "inspection_fee": 350.0,
+    "inspection_fee_basis": "per_advance",
+    "interest_rate": 0.0875
+  },
+  "activity_labels": {
+    "1": "Activity 1 \u2014 Site work, well, underground plumbing and slab",
+    "2": "Activity 2 \u2014 Block walls, tie beams, trusses, framing and roof cover",
+    "3": "Activity 3 \u2014 Second rough plumbing, electrical, roof cover, windows and drywall material",
+    "4": "Activity 4",
+    "5": "Activity 5"
+  },
+  "waiver": {
+    "form": "progress",
+    "full_activities": [
+      1,
+      2
+    ],
+    "partial_activities": {
+      "3": 0.6
+    },
+    "ledger_source": "Owner's cost ledger, workbook House OCALA2, tab OC2, Activities 1, 2 and 3"
+  },
+  "draw": {
+    "number": 1,
+    "activities": [
+      1,
+      2
+    ],
+    "all_activities": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  },
+  "properties": [
+    {
+      "letter": "A",
+      "address": "25 Pine Course Pass, Ocala, Florida",
+      "parcel": "9017-0279-25",
+      "permit": "BL26-04-10570",
+      "ledger": {
+        "1": {
+          "items": [
+            [
+              "House location staking",
+              175
+            ],
+            [
+              "Water well",
+              6500
+            ],
+            [
+              "Land clearing",
+              5625
+            ],
+            [
+              "Fill sand",
+              2600
+            ],
+            [
+              "Construction pad / site preparation",
+              1200
+            ],
+            [
+              "Density test",
+              150
+            ],
+            [
+              "Plumbing, first rough",
+              3397.5
+            ],
+            [
+              "Steel materials for shell",
+              1800
+            ],
+            [
+              "Concrete for slab",
+              8706.94
+            ],
+            [
+              "Labour for slab",
+              3415.5
+            ],
+            [
+              "Dumpster fee",
+              150
+            ]
+          ],
+          "hard": 33719.94,
+          "commission": 3034.79
+        },
+        "2": {
+          "items": [
+            [
+              "Block material",
+              5793.55
+            ],
+            [
+              "Block laying labour",
+              2955
+            ],
+            [
+              "Concrete, cells and tie beams",
+              1397.5
+            ],
+            [
+              "Perimeter footing pour",
+              600
+            ],
+            [
+              "Trusses",
+              5117
+            ],
+            [
+              "Framing material",
+              6566.86
+            ],
+            [
+              "Truss and sheathing installation",
+              5532
+            ],
+            [
+              "Roof cover material, shingles",
+              3202.03
+            ]
+          ],
+          "hard": 31163.94,
+          "commission": 2804.75
+        },
+        "3": {
+          "items": [
+            [
+              "Plumbing, second rough",
+              2713.5
+            ],
+            [
+              "Electrical, rough",
+              5713
+            ],
+            [
+              "Underground electrical connection",
+              983
+            ],
+            [
+              "Shingle installation",
+              3850
+            ],
+            [
+              "Window material",
+              5126.16
+            ],
+            [
+              "Window installation",
+              950
+            ],
+            [
+              "Entry door",
+              361.44
+            ],
+            [
+              "Drywall material",
+              2558.53
+            ]
+          ],
+          "hard": 22255.63,
+          "commission": 2003.01
+        }
+      },
+      "draw_schedule": {
+        "1": {
+          "hard": 34319.94,
+          "commission": 3088.79
+        },
+        "2": {
+          "hard": 31361.91,
+          "commission": 2822.57
+        },
+        "3": {
+          "hard": 34252.56,
+          "commission": 2852.62
+        },
+        "4": {
+          "hard": 40286.26,
+          "commission": 2820.04
+        },
+        "5": {
+          "hard": 24344.72,
+          "commission": 1704.13
+        }
+      },
+      "unpaid": 25645.52
+    },
+    {
+      "letter": "B",
+      "address": "7 Pine Trace, Ocala, Florida",
+      "parcel": "9009-0078-26",
+      "permit": "BL26-04-10571",
+      "ledger": {
+        "1": {
+          "items": [
+            [
+              "House location staking",
+              175
+            ],
+            [
+              "Water well",
+              10000
+            ],
+            [
+              "Land clearing",
+              1800
+            ],
+            [
+              "Fill sand",
+              3380
+            ],
+            [
+              "Construction pad / site preparation",
+              1200
+            ],
+            [
+              "Density test",
+              150
+            ],
+            [
+              "Plumbing, first rough",
+              3397.5
+            ],
+            [
+              "Steel materials for shell",
+              1800
+            ],
+            [
+              "Concrete for slab",
+              8706.95
+            ],
+            [
+              "Labour for slab",
+              3415.5
+            ],
+            [
+              "Dumpster fee",
+              150
+            ]
+          ],
+          "hard": 34174.95,
+          "commission": 3075.75
+        },
+        "2": {
+          "items": [
+            [
+              "Block material",
+              5718.08
+            ],
+            [
+              "Block laying labour",
+              2955
+            ],
+            [
+              "Concrete, cells and tie beams",
+              1397.5
+            ],
+            [
+              "Perimeter footing pour",
+              600
+            ],
+            [
+              "Trusses",
+              5117
+            ],
+            [
+              "Framing material",
+              6566.86
+            ],
+            [
+              "Truss and sheathing installation",
+              5482
+            ],
+            [
+              "Roof cover material, shingles",
+              3202.03
+            ]
+          ],
+          "hard": 31038.47,
+          "commission": 2793.46
+        },
+        "3": {
+          "items": [
+            [
+              "Plumbing, second rough",
+              2713.5
+            ],
+            [
+              "Electrical, rough",
+              5713
+            ],
+            [
+              "Underground electrical connection",
+              983
+            ],
+            [
+              "Shingle installation",
+              3850
+            ],
+            [
+              "Window material",
+              5174.58
+            ],
+            [
+              "Window installation",
+              950
+            ],
+            [
+              "Entry door",
+              361.44
+            ],
+            [
+              "Drywall material",
+              2558.53
+            ]
+          ],
+          "hard": 22304.05,
+          "commission": 2007.36
+        }
+      },
+      "draw_schedule": {
+        "1": {
+          "hard": 34774.95,
+          "commission": 3129.75
+        },
+        "2": {
+          "hard": 31236.44,
+          "commission": 2811.28
+        },
+        "3": {
+          "hard": 34252.56,
+          "commission": 2852.62
+        },
+        "4": {
+          "hard": 40286.26,
+          "commission": 2820.04
+        },
+        "5": {
+          "hard": 24344.72,
+          "commission": 1704.13
+        }
+      },
+      "unpaid": 25693.94
+    },
+    {
+      "letter": "C",
+      "address": "46 Walnut Course, Ocala, Florida",
+      "parcel": "9024-0578-15",
+      "permit": "BL26-04-10572",
+      "ledger": {
+        "1": {
+          "items": [
+            [
+              "House location staking",
+              175
+            ],
+            [
+              "Water well",
+              7550
+            ],
+            [
+              "Land clearing",
+              500
+            ],
+            [
+              "Fill sand",
+              6180
+            ],
+            [
+              "Construction pad / site preparation",
+              1200
+            ],
+            [
+              "Density test",
+              150
+            ],
+            [
+              "Plumbing, first rough",
+              3397.5
+            ],
+            [
+              "Steel materials for shell",
+              1800
+            ],
+            [
+              "Concrete for slab",
+              8706.94
+            ],
+            [
+              "Labour for slab",
+              3415.5
+            ],
+            [
+              "Dumpster fee",
+              150
+            ]
+          ],
+          "hard": 33224.94,
+          "commission": 2990.24
+        },
+        "2": {
+          "items": [
+            [
+              "Block material",
+              5718.08
+            ],
+            [
+              "Block laying labour",
+              2955
+            ],
+            [
+              "Concrete, cells and tie beams",
+              1849
+            ],
+            [
+              "Perimeter footing pour",
+              600
+            ],
+            [
+              "Trusses",
+              5117
+            ],
+            [
+              "Framing material",
+              6566.86
+            ],
+            [
+              "Truss and sheathing installation",
+              5532
+            ],
+            [
+              "Roof cover material, shingles",
+              3202.03
+            ]
+          ],
+          "hard": 31539.97,
+          "commission": 2838.6
+        },
+        "3": {
+          "items": [
+            [
+              "Plumbing, second rough",
+              2713.5
+            ],
+            [
+              "Electrical, rough",
+              5713
+            ],
+            [
+              "Underground electrical connection",
+              983
+            ],
+            [
+              "Shingle installation",
+              3850
+            ],
+            [
+              "Window material",
+              4916.87
+            ],
+            [
+              "Window installation",
+              950
+            ],
+            [
+              "Entry door",
+              361.44
+            ],
+            [
+              "Drywall material",
+              2558.53
+            ]
+          ],
+          "hard": 22046.34,
+          "commission": 1984.17
+        }
+      },
+      "draw_schedule": {
+        "1": {
+          "hard": 33824.94,
+          "commission": 3044.24
+        },
+        "2": {
+          "hard": 31737.94,
+          "commission": 2856.41
+        },
+        "3": {
+          "hard": 34252.56,
+          "commission": 2852.62
+        },
+        "4": {
+          "hard": 40286.26,
+          "commission": 2820.04
+        },
+        "5": {
+          "hard": 24344.72,
+          "commission": 1704.13
+        }
+      },
+      "unpaid": 25436.23
+    }
+  ],
+  "commission_authority": "under Article II of the General Contractor Construction Agreement",
+  "commission_exclusions": "Permit fees, impact fees, utility connections, survey and engineering costs are excluded from the commission base and are not included in this schedule."
+}
