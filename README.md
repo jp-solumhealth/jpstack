@@ -22,6 +22,7 @@
 | `/product-insights` | Sprint planner | Extracts feature requests, bugs, UX friction from customer calls. RICE-scores everything. Feeds engineering with evidence, not opinions. |
 | `/weekly-retro` | Friday scorecard | Reviews all channels: revenue pace, deals won/lost, calls made, outreach performance, content published. Week-over-week trends. |
 | `/investor-report` | Board reporter | Pulls KPIs from Google Sheets + call insights from Fireflies. Outputs a structured DOCX in your template. |
+| `/cfo-review` | CFO | Audits every Ramp transaction: receipt and memo compliance against your threshold, business justification per purchase, duplicates net of refunds, orphaned subscriptions, runaway categories. Opens receipts when a memo doesn't settle it. |
 | `/pricing-coach` | Sales coach | Scores each sales call 1-5 against proven benchmarks. Flags violations. Delivers coaching reports with specific scripts to use next week. |
 | `/conference-prep` | Event strategist | Pre-event: enriches attendee list via Apollo, classifies ICPs, builds branded curated agenda. |
 | `/post-conference-insights` | Thought leader | Post-event: branded 1-2 page PDF one-pager with stat cards and action items. Anti-AI detection pass included. |
@@ -168,6 +169,7 @@ These skills pull from your existing tools. The more connectors you have, the mo
 | **Fireflies** | pricing-coach, product-insights, pmf-pulse, investor-report, weekly-retro |
 | **Apollo.io** | conference-prep, post-conference-fup, pmf-pulse, weekly-retro |
 | **Ahrefs** | pmf-pulse competitor benchmarking |
+| **Ramp** | cfo-review spend and receipt audit |
 | **ICD-10 / NPI / CMS** | prior-auth-review product demo |
 
 Skills degrade gracefully. If a connector isn't available, the skill uses what it can and tells you what's missing.
@@ -186,7 +188,7 @@ cd ~/.claude/skills/jpstack && git pull && ./setup
 ## Uninstalling
 
 ```bash
-for s in chief-of-staff pmf-pulse product-insights weekly-retro investor-report pricing-coach conference-prep post-conference-insights post-conference-fup prior-auth-review x-healthcare-posts linkedin-carousel-builder fact-check solum-health-brand; do rm -f ~/.claude/skills/$s; done && rm -rf ~/.claude/skills/jpstack
+for s in chief-of-staff pmf-pulse product-insights weekly-retro investor-report cfo-review pricing-coach conference-prep post-conference-insights post-conference-fup prior-auth-review x-healthcare-posts linkedin-carousel-builder fact-check solum-health-brand; do rm -f ~/.claude/skills/$s; done && rm -rf ~/.claude/skills/jpstack
 ```
 
 ## How I use these skills
