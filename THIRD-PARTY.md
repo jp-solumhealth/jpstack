@@ -12,6 +12,8 @@ npx skills add jamesgray007/hoai-course --skill writing-linkedin-posts --yes
 npx skills add vercel-labs/next-skills --skill next-best-practices --yes
 npx skills add google-labs-code/stitch-skills --skill shadcn-ui --yes
 npx skills add googleworkspace/cli --yes
+npx skills add vercel-labs/skills --skill find-skills --yes
+npx skills add anthropics/skills --skill skill-creator --yes
 git clone https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
 ```
 
@@ -60,12 +62,10 @@ Tracked in `~/.agents/.skill-lock.json`.
 `gws-docs` · `gws-docs-write` · `gws-drive` · `gws-gmail` · `gws-sheets` ·
 `gws-sheets-append` · `gws-sheets-read` · `gws-slides`
 
-## Unattributed
+## Utility
 
-Installed locally with no recorded upstream in `~/.agents/.skill-lock.json`. Source not
-verified — confirm before redistributing.
-
-| Skill | Use |
-|-------|-----|
-| `api-key-manager` | Store and manage API keys across sessions |
-| `find-skills` | Discover and install new skills |
+| Skill | Source | Use |
+|-------|--------|-----|
+| `find-skills` | [vercel-labs/skills](https://github.com/vercel-labs/skills) | Discover and install new agent skills |
+| `skill-creator` | [anthropics/skills](https://github.com/anthropics/skills) | Create, modify and improve skills |
+| `api-key-manager` | Local (custom) | Store and manage API keys across sessions |
