@@ -1,7 +1,7 @@
 ---
 name: pricing-coach
 description: >
-  Weekly pricing conversation coach for Solum Health sales calls. Pulls calls from Fireflies,
+  Weekly pricing conversation coach for Solum Health sales calls. Pulls calls from Fathom,
   extracts all pricing moments, scores each conversation against proven benchmarks, and delivers
   a coaching report with what worked, what didn't, and specific improvement recommendations.
   Use this skill when the user says "pricing coach", "pricing feedback", "review my pricing",
@@ -14,8 +14,21 @@ description: >
 
 # Pricing Coach
 
-Analyze Solum Health sales calls for pricing conversation quality. Pull calls from Fireflies,
+Analyze Solum Health sales calls for pricing conversation quality. Pull calls from Fathom,
 extract pricing moments, score against proven benchmarks, and deliver actionable coaching.
+
+## API Authentication
+
+Fathom API key is stored in `~/.claude/.api-keys.json` under _none — MCP_.
+
+Load the key at the start of every run:
+
+```bash
+```
+
+All Fathom access is via MCP tools (`mcp__claude_ai_Fathom__*`). No endpoint, no key, no headers.
+
+All API calls run via Bash tool with curl, piped through python3 for JSON processing.
 
 ## Core Principle
 
@@ -30,23 +43,50 @@ recommendation should reference a specific moment from a specific call.
 Determine the analysis period:
 - Default: last 7 days from today
 - If user specifies a range (e.g., "last 2 weeks", "this month", "Feb 10-24"), use that
-- Calculate `fromDate` and `toDate` in ISO format
+- Calculate `fromDate` and `toDate` as Unix millisecond timestamps for Fathom filtering
 
 ### Phase 1: Call Discovery
 
-Search Fireflies for all calls in the date range that contain pricing discussions.
+Fetch recent transcripts from Fathom and filter for pricing-related calls client-side.
 
-Run these searches in parallel using the Fireflies MCP tools:
+**Step 1: Pull all recent transcripts**
 
 ```
-fireflies_search: keyword:"pricing" scope:sentences from:{fromDate} to:{toDate} limit:50
-fireflies_search: keyword:"price" scope:sentences from:{fromDate} to:{toDate} limit:50
-fireflies_search: keyword:"cost" scope:sentences from:{fromDate} to:{toDate} limit:50
-fireflies_search: keyword:"free" scope:sentences from:{fromDate} to:{toDate} limit:50
-fireflies_search: keyword:"monthly" scope:sentences from:{fromDate} to:{toDate} limit:50
-fireflies_search: keyword:"500" scope:sentences from:{fromDate} to:{toDate} limit:50
-fireflies_search: keyword:"trial" scope:sentences from:{fromDate} to:{toDate} limit:50
+# Fathom MCP — no curl, no API key. See ~/.claude/skills/_shared/fathom-meetings.md
+mcp__claude_ai_Fathom__list_meetings(
+  created_after: "<ISO8601 start of window>",
+  max_pages: 3,
+  include_summary: true,
+  include_action_items: true
+)
+# -> recording_id, title, date, url, recorded_by, calendar_invitees
+# Then, for verbatim quotes:
+mcp__claude_ai_Fathom__get_meeting_transcript(recording_id: <id>)
 ```
+
+**Step 2: Filter results client-side**
+
+Since the Fathom MCP tools does not support keyword search in the basic query, filter the returned transcripts using python3:
+
+- Parse the `date` field (Unix millisecond timestamp) and keep only transcripts within the date range
+- Check `title` for prospect/company names
+- Check `summary.overview` for pricing keywords: "pricing", "price", "cost", "free", "monthly", "500", "trial", "$"
+- A call qualifies if its title or overview contains any pricing keyword
+
+```
+# Fathom MCP — no curl, no API key. See ~/.claude/skills/_shared/fathom-meetings.md
+mcp__claude_ai_Fathom__list_meetings(
+  created_after: "<ISO8601 start of window>",
+  max_pages: 3,
+  include_summary: true,
+  include_action_items: true
+)
+# -> recording_id, title, date, url, recorded_by, calendar_invitees
+# Then, for verbatim quotes:
+mcp__claude_ai_Fathom__get_meeting_transcript(recording_id: <id>)
+```
+
+Note: `action_items` is a string, not an array. `date` is a Unix millisecond timestamp.
 
 Deduplicate by meeting ID. Exclude internal calls (weekly team meetings, 1:1s with Juliana,
 investor calls). Focus on prospect and client-facing calls only.
@@ -60,11 +100,24 @@ Identification rules for excluding non-sales calls:
 
 ### Phase 2: Call Analysis
 
-For each qualifying call, retrieve the summary using `fireflies_get_summary`.
+For each qualifying call, retrieve the full summary by transcript ID:
+
+```
+# Fathom MCP — no curl, no API key. See ~/.claude/skills/_shared/fathom-meetings.md
+mcp__claude_ai_Fathom__list_meetings(
+  created_after: "<ISO8601 start of window>",
+  max_pages: 3,
+  include_summary: true,
+  include_action_items: true
+)
+# -> recording_id, title, date, url, recorded_by, calendar_invitees
+# Then, for verbatim quotes:
+mcp__claude_ai_Fathom__get_meeting_transcript(recording_id: <id>)
+```
 
 For each call, extract:
 
-1. **Pricing tactic used** — What approach was taken?
+1. **Pricing tactic used** -- What approach was taken?
    - Free trial/test offered
    - $500/mo Growth tier pitched
    - $2,500/mo Scale tier pitched
@@ -73,16 +126,16 @@ For each call, extract:
    - No pricing discussed (ran out of time)
    - Pricing sent async (email/doc)
 
-2. **Prospect reaction** — How did they respond?
+2. **Prospect reaction** -- How did they respond?
    - Positive acceptance ("sounds good", "let's do it", "not a big deal")
    - Price anchoring concern ("that seems expensive", "what's the total")
    - Confusion ("what does that include", "what's the difference")
    - Sticker shock ("that's a lot", silence, subject change)
    - No reaction (pricing wasn't reached)
 
-3. **Key pricing quotes** — Direct quotes from prospect about pricing/cost/value
+3. **Key pricing quotes** -- Direct quotes from prospect about pricing/cost/value
 
-4. **Conversion signal** — Did the call result in:
+4. **Conversion signal** -- Did the call result in:
    - Next step scheduled
    - Trial/test initiated
    - Onboarding started
@@ -182,7 +235,8 @@ The scoring is calibrated against the proven benchmarks documented in
 
 ## Important Notes
 
-- **Fireflies MCP is required.** If not connected, tell the user.
+- **Fathom API access required.** Key stored in `~/.claude/.api-keys.json`.
+- **All API calls run via Bash tool with curl**, piped through python3 for JSON processing.
 - **Exclude internal calls.** Only score prospect/client-facing conversations.
 - **Be direct in coaching.** This isn't a pat on the back. If pricing was bad, say so and
   say exactly what to do differently. Use the benchmarks as the standard.

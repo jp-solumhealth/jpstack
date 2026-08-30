@@ -2,9 +2,10 @@
 name: meeting-prep
 description: >
   Generates a one-page meeting prep brief before any sales or customer call.
-  Pulls from HubSpot, Fireflies, and Apollo, cross-references data across sources,
-  and delivers a structured brief with company context, relationship history, deal status,
-  past meeting highlights, and recommended talking points. Use this skill when the user says
+  Pulls from HubSpot, Fathom, and Apollo via direct HTTP API calls,
+  cross-references data across sources, and delivers a structured brief with
+  company context, relationship history, deal status, past meeting highlights,
+  and recommended talking points. Use this skill when the user says
   "prep for my meeting with...", "meeting prep", "get ready for my call with...",
   "prep me for [company]", "what do I need to know before my call with...",
   or "brief me on [company/person]".
@@ -13,6 +14,34 @@ description: >
 # Meeting Prep — Pre-Call Intelligence Brief
 
 Your job is to build a comprehensive, cross-referenced meeting prep brief before JP gets on a sales or customer call. Pull from every available data source, verify data consistency across sources, and deliver a structured brief that makes JP the most prepared person on the call.
+
+## API Authentication
+
+All API calls use the Bash tool with `curl`, piping output through `python3 -m json.tool` (or `python3 -c '...'`) for JSON processing. Read API keys from `~/.claude/.api-keys.json` at the start of every run.
+
+| Service    | Base URL                              | Auth Method                          | Key path in `.api-keys.json` |
+|------------|---------------------------------------|--------------------------------------|------------------------------|
+| HubSpot    | `https://api.hubapi.com`              | `Authorization: Bearer <KEY>`        | `keys.hubspot.key`           |
+| Fathom  | `MCP: mcp__claude_ai_Fathom__*`    | `Authorization: Bearer <KEY>`        | _none — MCP_         |
+| Apollo     | `https://api.apollo.io`               | `X-Api-Key: <KEY>`                   | `keys["apollo.io"].key`      |
+
+### HubSpot Deal Pipeline Stage Mapping
+
+Use this mapping to translate internal stage IDs to human-readable names:
+
+| Stage ID                  | Stage Name            |
+|---------------------------|-----------------------|
+| `appointmentscheduled`    | Inbound Received      |
+| `qualifiedtobuy`          | Outreach Started      |
+| `presentationscheduled`   | Meeting Booked        |
+| `decisionmakerboughtin`   | Discovery Completed   |
+| `contractsent`            | SQL                   |
+| `3249938160`              | Pilot Started         |
+| `closedwon`               | Proposal Sent         |
+| `1423313647`              | Verbal Yes            |
+| `1423313648`              | Closed Won            |
+
+Note: The `closedwon` ID is misleadingly named — it actually maps to "Proposal Sent", not a closed-won state. The real Closed Won stage is `1423313648`.
 
 ## Trigger Patterns
 
@@ -37,43 +66,51 @@ If only a person name is given, use HubSpot and Apollo to resolve their company.
 
 ## Data Collection Workflow
 
+All data collection uses direct HTTP API calls via `curl` in the Bash tool. Parse JSON responses with `python3`.
+
 ### Step 1: Resolve Identifiers
 
 Start by finding the company and contact in HubSpot so you have IDs for subsequent queries.
 
-```
-Call: mcp__claude_ai_HubSpot__search_crm_objects
-Params:
-  objectType: "companies"
-  filterGroups: [
-    { filters: [
-      { propertyName: "name", operator: "CONTAINS_TOKEN", value: "<company name>" }
-    ]}
-  ]
-  properties: ["name", "domain", "industry", "numberofemployees", "city", "state",
-               "country", "phone", "description", "hs_lastmodifieddate",
-               "notes_last_updated", "createdate", "hubspot_owner_id",
-               "hs_num_open_deals", "hs_total_deal_value"]
-  limit: 5
+```bash
+curl -s "https://api.hubapi.com/crm/v3/objects/companies/search" \
+  -H "Authorization: Bearer <HUBSPOT_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filterGroups": [{
+      "filters": [{
+        "propertyName": "name",
+        "operator": "CONTAINS_TOKEN",
+        "value": "<company name>"
+      }]
+    }],
+    "properties": ["name", "domain", "industry", "numberofemployees", "city", "state",
+                    "country", "phone", "description", "hs_lastmodifieddate",
+                    "notes_last_updated", "createdate", "hubspot_owner_id",
+                    "hs_num_open_deals", "hs_total_deal_value"],
+    "limit": 5
+  }' | python3 -m json.tool
 ```
 
 If a person name was provided:
-```
-Call: mcp__claude_ai_HubSpot__search_crm_objects
-Params:
-  objectType: "contacts"
-  filterGroups: [
-    { filters: [
-      { propertyName: "firstname", operator: "CONTAINS_TOKEN", value: "<first name>" },
-      { propertyName: "lastname", operator: "CONTAINS_TOKEN", value: "<last name>" }
-    ]}
-  ]
-  properties: ["firstname", "lastname", "email", "jobtitle", "phone",
-               "company", "hs_lead_status", "lifecyclestage", "createdate",
-               "notes_last_updated", "hs_sales_email_last_replied",
-               "hs_email_last_reply_date", "hubspot_owner_id",
-               "hs_sequences_is_enrolled"]
-  limit: 5
+```bash
+curl -s "https://api.hubapi.com/crm/v3/objects/contacts/search" \
+  -H "Authorization: Bearer <HUBSPOT_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filterGroups": [{
+      "filters": [
+        { "propertyName": "firstname", "operator": "CONTAINS_TOKEN", "value": "<first name>" },
+        { "propertyName": "lastname", "operator": "CONTAINS_TOKEN", "value": "<last name>" }
+      ]
+    }],
+    "properties": ["firstname", "lastname", "email", "jobtitle", "phone",
+                    "company", "hs_lead_status", "lifecyclestage", "createdate",
+                    "notes_last_updated", "hs_sales_email_last_replied",
+                    "hs_email_last_reply_date", "hubspot_owner_id",
+                    "hs_sequences_is_enrolled"],
+    "limit": 5
+  }' | python3 -m json.tool
 ```
 
 If no person name was provided, search for all contacts associated with the company.
@@ -82,74 +119,91 @@ If no person name was provided, search for all contacts associated with the comp
 
 #### 2A. HubSpot — Deals
 
-```
-Call: mcp__claude_ai_HubSpot__search_crm_objects
-Params:
-  objectType: "deals"
-  filterGroups: [
-    { filters: [
-      { propertyName: "associations.company", operator: "EQ", value: "<companyId>" }
-    ]}
-  ]
-  properties: ["dealname", "amount", "dealstage", "pipeline", "closedate",
-               "createdate", "hs_lastmodifieddate", "hubspot_owner_id",
-               "hs_deal_stage_probability", "description",
-               "notes_last_updated", "hs_is_closed_won",
-               "hs_is_closed", "hs_acv", "hs_mrr"]
-  limit: 20
+```bash
+curl -s "https://api.hubapi.com/crm/v3/objects/deals/search" \
+  -H "Authorization: Bearer <HUBSPOT_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filterGroups": [{
+      "filters": [{
+        "propertyName": "associations.company",
+        "operator": "EQ",
+        "value": "<companyId>"
+      }]
+    }],
+    "properties": ["dealname", "amount", "dealstage", "pipeline", "closedate",
+                    "createdate", "hs_lastmodifieddate", "hubspot_owner_id",
+                    "hs_deal_stage_probability", "description",
+                    "notes_last_updated", "hs_is_closed_won",
+                    "hs_is_closed", "hs_acv", "hs_mrr"],
+    "limit": 20
+  }' | python3 -m json.tool
 ```
 
 If company association search does not work, search by deal name containing the company name as a fallback.
 
-Also get deal stage names:
-```
-Call: mcp__claude_ai_HubSpot__get_properties
-Params: objectType="deals", propertyNames=["dealstage", "pipeline"]
+To get pipeline stage definitions (verify against the stage mapping table above):
+```bash
+curl -s "https://api.hubapi.com/crm/v3/pipelines/deals" \
+  -H "Authorization: Bearer <HUBSPOT_KEY>" | python3 -m json.tool
 ```
 
 #### 2B. HubSpot — Engagement History
 
 Search for contacts associated with the company to understand the full engagement timeline:
-```
-Call: mcp__claude_ai_HubSpot__search_crm_objects
-Params:
-  objectType: "contacts"
-  filterGroups: [
-    { filters: [
-      { propertyName: "company", operator: "CONTAINS_TOKEN", value: "<company name>" }
-    ]}
-  ]
-  properties: ["firstname", "lastname", "email", "jobtitle", "phone",
-               "hs_lead_status", "lifecyclestage", "createdate",
-               "notes_last_updated", "hs_sales_email_last_replied",
-               "hs_email_last_reply_date", "hs_email_sends_since_last_engagement",
-               "num_notes", "num_contacted_notes", "hs_sequences_is_enrolled",
-               "hs_analytics_num_page_views", "hs_analytics_num_visits"]
-  limit: 20
-```
-
-#### 2C. Fireflies — Past Meeting Transcripts
-
-Search for meetings with this company/person:
-```
-Call: mcp__claude_ai_Fireflies__fireflies_search
-Params:
-  keyword: "<company name>"
-  limit: 10
+```bash
+curl -s "https://api.hubapi.com/crm/v3/objects/contacts/search" \
+  -H "Authorization: Bearer <HUBSPOT_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filterGroups": [{
+      "filters": [{
+        "propertyName": "company",
+        "operator": "CONTAINS_TOKEN",
+        "value": "<company name>"
+      }]
+    }],
+    "properties": ["firstname", "lastname", "email", "jobtitle", "phone",
+                    "hs_lead_status", "lifecyclestage", "createdate",
+                    "notes_last_updated", "hs_sales_email_last_replied",
+                    "hs_email_last_reply_date", "hs_email_sends_since_last_engagement",
+                    "num_notes", "num_contacted_notes", "hs_sequences_is_enrolled",
+                    "hs_analytics_num_page_views", "hs_analytics_num_visits"],
+    "limit": 20
+  }' | python3 -m json.tool
 ```
 
-Also try searching by person name if provided:
+#### 2C. Fathom — Past Meeting Transcripts
+
+Search for meetings with this company/person using the GraphQL API. Note: `summary.action_items` is a string (not an array), and `date` is Unix milliseconds.
+
 ```
-Call: mcp__claude_ai_Fireflies__fireflies_search
-Params:
-  keyword: "<person name>"
-  limit: 10
+# Fathom MCP — no curl, no API key. See ~/.claude/skills/_shared/fathom-meetings.md
+mcp__claude_ai_Fathom__list_meetings(
+  created_after: "<ISO8601 start of window>",
+  max_pages: 3,
+  include_summary: true,
+  include_action_items: true
+)
+# -> recording_id, title, date, url, recorded_by, calendar_invitees
+# Then, for verbatim quotes:
+mcp__claude_ai_Fathom__get_meeting_transcript(recording_id: <id>)
 ```
 
-For each relevant meeting found, pull the summary:
+Also try searching by person name if provided (same query, filter by person name).
+
+For each relevant meeting found, pull the full summary by transcript ID:
 ```
-Call: mcp__claude_ai_Fireflies__fireflies_get_summary
-Params: transcriptId: "<meeting ID>"
+# Fathom MCP — no curl, no API key. See ~/.claude/skills/_shared/fathom-meetings.md
+mcp__claude_ai_Fathom__list_meetings(
+  created_after: "<ISO8601 start of window>",
+  max_pages: 3,
+  include_summary: true,
+  include_action_items: true
+)
+# -> recording_id, title, date, url, recorded_by, calendar_invitees
+# Then, for verbatim quotes:
+mcp__claude_ai_Fathom__get_meeting_transcript(recording_id: <id>)
 ```
 
 Extract from each meeting:
@@ -164,10 +218,9 @@ Extract from each meeting:
 
 #### 2D. Apollo — Company Enrichment
 
-```
-Call: mcp__claude_ai_Apollo_io__apollo_organizations_enrich
-Params:
-  domain: "<company domain from HubSpot>"
+```bash
+curl -s "https://api.apollo.io/v1/organizations/enrich?domain=<company domain from HubSpot>" \
+  -H "X-Api-Key: <APOLLO_KEY>" | python3 -m json.tool
 ```
 
 Extract:
@@ -181,29 +234,36 @@ Extract:
 - Recent news or job postings
 
 If domain is not available, search by name:
-```
-Call: mcp__claude_ai_Apollo_io__apollo_mixed_companies_search
-Params:
-  q_organization_name: "<company name>"
-  per_page: 3
+```bash
+curl -s -X POST "https://api.apollo.io/v1/mixed_companies/search" \
+  -H "X-Api-Key: <APOLLO_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "q_organization_name": "<company name>",
+    "per_page": 3
+  }' | python3 -m json.tool
 ```
 
 #### 2E. Apollo — Contact Enrichment
 
 If a specific person is the meeting attendee:
-```
-Call: mcp__claude_ai_Apollo_io__apollo_people_match
-Params:
-  email: "<contact email>"
+```bash
+curl -s -X POST "https://api.apollo.io/v1/people/match" \
+  -H "X-Api-Key: <APOLLO_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "<contact email>"}' | python3 -m json.tool
 ```
 
 Or if no email:
-```
-Call: mcp__claude_ai_Apollo_io__apollo_mixed_people_api_search
-Params:
-  q_person_name: "<person name>"
-  q_organization_name: "<company name>"
-  per_page: 3
+```bash
+curl -s -X POST "https://api.apollo.io/v1/mixed_people/search" \
+  -H "X-Api-Key: <APOLLO_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "q_person_name": "<person name>",
+    "q_organization_name": "<company name>",
+    "per_page": 3
+  }' | python3 -m json.tool
 ```
 
 Extract:
@@ -215,10 +275,9 @@ Extract:
 
 #### 2F. Apollo — Job Postings (Buying Signals)
 
-```
-Call: mcp__claude_ai_Apollo_io__apollo_organizations_job_postings
-Params:
-  organization_id: "<apollo org ID>"
+```bash
+curl -s "https://api.apollo.io/v1/organizations/<apollo_org_id>/job_postings" \
+  -H "X-Api-Key: <APOLLO_KEY>" | python3 -m json.tool
 ```
 
 Look for:
@@ -233,7 +292,7 @@ Before assembling the brief, cross-reference data across sources. Check for and 
 #### Data Consistency
 - **Title mismatch**: Does the contact's title in HubSpot match Apollo? If not, note which is likely current.
 - **Company size discrepancy**: Does HubSpot's employee count match Apollo's? Flag if >20% difference.
-- **Deal amount vs. transcript**: If Fireflies transcripts mention specific pricing ($X/mo, $X/yr), compare against the HubSpot deal amount. Flag any discrepancy with exact quotes.
+- **Deal amount vs. transcript**: If Fathom transcripts mention specific pricing ($X/mo, $X/yr), compare against the HubSpot deal amount. Flag any discrepancy with exact quotes.
 - **Contact info**: Is the email/phone in HubSpot consistent with Apollo?
 
 #### Staleness Detection
@@ -243,7 +302,7 @@ Before assembling the brief, cross-reference data across sources. Check for and 
 - **Stale contact data**: If HubSpot contact was last modified >90 days ago, note the data may be outdated.
 
 #### Action Item Tracking
-- Review action items from previous Fireflies meetings.
+- Review action items from previous Fathom meetings.
 - Cross-reference against HubSpot notes and activity timeline.
 - Classify each action item as:
   - **COMPLETED**: Evidence of follow-through in HubSpot activity or subsequent meeting
@@ -393,7 +452,7 @@ DATA FRESHNESS
 HubSpot company: last modified [date]
 HubSpot contacts: last modified [date]
 HubSpot deal: last modified [date]
-Fireflies: [X] meetings found, most recent [date]
+Fathom: [X] meetings found, most recent [date]
 Apollo: enrichment as of [today]
 ================================================================
 ```
@@ -401,9 +460,9 @@ Apollo: enrichment as of [today]
 ## Error Handling
 
 - If HubSpot returns no company match: try alternate spellings, abbreviations, or domain search. If still nothing, note "Company not found in HubSpot" and continue with Apollo data.
-- If Fireflies returns no meetings: say "No previous meetings recorded." Continue with other sources.
+- If Fathom returns no meetings: say "No previous meetings recorded." Continue with other sources.
 - If Apollo enrichment fails: skip the company snapshot details that require Apollo. Note the source was unavailable.
-- If any MCP tool fails: continue with available data. Note which sources were unavailable at the top of the brief.
+- If any API call fails: continue with available data. Note which sources were unavailable at the top of the brief.
 - Never skip the brief because one source failed. Deliver what you have, clearly noting gaps.
 
 ## Tone & Style
@@ -414,6 +473,16 @@ Apollo: enrichment as of [today]
 - Every recommendation must be grounded in data from the sources. No generic sales advice.
 - Flag unknowns explicitly. "Unknown" is better than a guess.
 - The entire brief should be readable in under 3 minutes.
+
+## Required APIs
+
+| Service    | Endpoints Used                                                                 |
+|------------|--------------------------------------------------------------------------------|
+| HubSpot    | `POST /crm/v3/objects/{objectType}/search`, `GET /crm/v3/pipelines/deals`     |
+| Fathom  | `list_meetings`, `get_meeting_transcript`, `get_meeting_summary`                         |
+| Apollo     | `GET /v1/organizations/enrich`, `POST /v1/people/match`, `POST /v1/mixed_people/search`, `POST /v1/mixed_companies/search`, `GET /v1/organizations/{id}/job_postings` |
+
+All calls are executed via the Bash tool using `curl -s` with appropriate headers, piping JSON output through `python3` for parsing and filtering.
 
 ## Post-Brief Actions
 

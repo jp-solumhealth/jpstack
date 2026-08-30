@@ -1,0 +1,49 @@
+{
+  "client": "Highlights Healthcare",
+  "slug": "highlights-healthcare",
+  "date": "May 22, 2026",
+  "title": "Automating Intake, Eligibility & Prior Authorization",
+  "output_dir": "/Users/juanmontoya/Documents/Claude/solum-ops/clients/highlights-healthcare",
+  "roi_mode": "recurring",
+  "ramp_months": 1,
+  "pricing": [
+    {"service": "Re-Authorizations", "volume": 30, "rate": 16},
+    {"service": "Intake Authorizations", "volume": 20, "rate": 16},
+    {"service": "Payor-Change Authorizations", "volume": 15, "rate": 16},
+    {"service": "Insurance Monitoring", "volume": 360, "rate": 0.60},
+    {"service": "Intake Eligibility", "volume": 33.33, "rate": 1.50}
+  ],
+  "one_time": [
+    {"label": "Setup (May)", "amount": 500},
+    {"label": "Central Reach Integration — Intake + Prior Auth", "amount": 3000}
+  ],
+  "one_time_note": "alt: Intake/Insurance Verification = $2,000",
+  "drivers": [
+    {"name": "Admin time saved & repurposed", "rate": 20, "hours": [50, 100, 150], "basis": "$/hr ops/billing labor"},
+    {"name": "BCBA / clinical time recovered", "rate": 50, "hours": [5, 15, 20], "basis": "$/hr loaded clinical labor"},
+    {"name": "Extra billable clinical hours delivered", "rate": 60, "hours": [10, 20, 100], "basis": "$/hr reimbursed"}
+  ],
+  "benefits": [
+    {"stat": "20–30%", "title": "Fewer denials", "desc": "eliminates auth & intake data-entry errors before claims are submitted"},
+    {"stat": "30–50%", "title": "Faster intake", "desc": "recaptures revenue on every new learner by starting care sooner"},
+    {"stat": "50%", "title": "Less admin work", "desc": "redeploy the ops team to higher-value work"}
+  ],
+  "timeline": [
+    {"phase": "Agreement & Setup", "activities": "Contract · $500 setup · kickoff · NPI & payer-network verification", "lead": "Solum + HH", "start": 0, "end": 0, "kind": "impl"},
+    {"phase": "Central Reach Integration", "activities": "Connect CR · intake/insurance + prior-auth mapping", "lead": "Solum", "start": 1, "end": 2, "kind": "impl"},
+    {"phase": "Eligibility & Monitoring Go-Live", "activities": "Audit clients · resolve failures · monitoring live", "lead": "Solum + HH", "start": 2, "end": 3, "kind": "impl"},
+    {"phase": "Prior-Auth Automation Go-Live", "activities": "Re-auth · intake · payor-change automation live", "lead": "Solum", "start": 3, "end": 4, "kind": "impl"},
+    {"phase": "30-Day Validation", "activities": "Trial w/ opt-out · measure denial drop & hours saved", "lead": "HH", "start": 4, "end": 8, "kind": "validation"},
+    {"phase": "Optimization & Scale", "activities": "Tune workflows · QBR · expand scope", "lead": "Solum + HH", "start": 8, "end": 8, "kind": "impl"}
+  ],
+  "proof": "Trusted by Hi-5 ABA · AKP · Blossom ABA · Rise PT · $247K avg annual savings · 2,500+ payers · HIPAA & SOC 2 Type II · Backed by Y Combinator & the founders of Mercury, Headway and Turo",
+  "assumptions_sources": [
+    ["Authorization rate (all 3 types)", "$16/auth", "Solum SOW deck p.8 + 5/22 call"],
+    ["Insurance Monitoring rate", "$0.60/check", "Client-confirmed 5/22"],
+    ["Intake Eligibility rate", "$1.50/check", "Solum SOW deck p.7"],
+    ["Re-auth / Intake / Payor-change volumes", "30 / 20 / 15", "5/18 call (Nick)"],
+    ["Admin hrs saved", "50–150 /mo", "Client estimate — JP (confirm)"],
+    ["BCBA hrs recovered", "5–20 /mo", "Client estimate — JP (confirm)"],
+    ["Extra billable hrs", "10–100 /mo", "Client estimate — JP (confirm)"]
+  ]
+}
