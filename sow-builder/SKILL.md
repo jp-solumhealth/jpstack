@@ -2,7 +2,7 @@
 name: sow-builder
 description: >
   Generate scoped Statements of Work (SOWs) with embedded business cases for Solum Health
-  prospects. Pulls real data from Fireflies (call transcripts), HubSpot (deal records, emails),
+  prospects. Pulls real data from Fathom (call transcripts), HubSpot (deal records, emails),
   and Apollo (company enrichment), then cross-references all sources to produce an accurate,
   conservative proposal. Use this skill when the user says "build a SOW", "create a proposal",
   "SOW", "statement of work", "scope of work", "write a proposal", "build a business case",
@@ -22,14 +22,13 @@ All data collection uses direct HTTP API calls via the Bash tool with `curl`, pi
 
 | Service | Base URL | Auth Method | Key Path |
 |---------|----------|-------------|----------|
-| Fireflies | `https://api.fireflies.ai/graphql` | `Authorization: Bearer <KEY>` | `.keys.fireflies.key` |
+| Fathom | `MCP: mcp__claude_ai_Fathom__*` | `Authorization: Bearer <KEY>` | _none — MCP_ |
 | HubSpot | `https://api.hubapi.com` | `Authorization: Bearer <KEY>` | `.keys.hubspot.key` |
 | Apollo | `https://api.apollo.io` | `X-Api-Key: <KEY>` header | `.keys["apollo.io"].key` |
 
 To load a key at runtime:
 
 ```bash
-FIREFLIES_KEY=$(python3 -c "import json; print(json.load(open('$HOME/.claude/.api-keys.json'))['keys']['fireflies']['key'])")
 HUBSPOT_KEY=$(python3 -c "import json; print(json.load(open('$HOME/.claude/.api-keys.json'))['keys']['hubspot']['key'])")
 APOLLO_KEY=$(python3 -c "import json; print(json.load(open('$HOME/.claude/.api-keys.json'))['keys']['apollo.io']['key'])")
 ```
@@ -53,22 +52,21 @@ catch issues before sending.
 Run ALL of these in parallel where possible. The goal is to pull every data point available
 before writing a single word.
 
-#### 1A. Fireflies — Call Transcripts
+#### 1A. Fathom — Call Transcripts
 
 Fetch all recent transcripts and filter client-side by company name:
 
-```bash
-curl -s "https://api.fireflies.ai/graphql" \
-  -H "Authorization: Bearer $FIREFLIES_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"query": "query { transcripts(mine: true, limit: 50) { id title date duration participants summary { action_items overview shorthand_bullet } } }"}' \
-  | python3 -c "
-import json, sys
-data = json.load(sys.stdin)
-for t in data.get('data', {}).get('transcripts', []):
-    if '{company_name}'.lower() in t.get('title', '').lower():
-        print(json.dumps(t, indent=2))
-"
+```
+# Fathom MCP — no curl, no API key. See ~/.claude/skills/_shared/fathom-meetings.md
+mcp__claude_ai_Fathom__list_meetings(
+  created_after: "<ISO8601 start of window>",
+  max_pages: 3,
+  include_summary: true,
+  include_action_items: true
+)
+# -> recording_id, title, date, url, recorded_by, calendar_invitees
+# Then, for verbatim quotes:
+mcp__claude_ai_Fathom__get_meeting_transcript(recording_id: <id>)
 ```
 
 **Note:** The `date` field is Unix milliseconds. The `action_items` field is a string (not an array). Filter transcripts client-side by checking if the company name appears in the title.
@@ -534,7 +532,7 @@ requirements, and intake patterns your practice deals with daily."}
 - No jargon that the prospect wouldn't understand. If using a technical term, explain it.
 
 ### Privacy
-- Do NOT include Fireflies transcript IDs or raw transcript text in the client-facing sections.
+- Do NOT include Fathom transcript IDs or raw transcript text in the client-facing sections.
 - The "Source" column in tables should reference "Discovery call ({date})" or "Email ({date})", not internal system references.
 - The Fact-Check section (Section 8) is internal only and must be removed before sending.
 
@@ -544,7 +542,7 @@ If a data source is unavailable or returns no results:
 
 | Source | Fallback |
 |--------|----------|
-| Fireflies returns no transcripts | Ask user: "I couldn't find call transcripts for {company}. Can you share the key details from your calls?" |
+| Fathom returns no transcripts | Ask user: "I couldn't find call transcripts for {company}. Can you share the key details from your calls?" |
 | HubSpot has no deal record | Proceed with available data, note "No HubSpot deal record found" in Fact-Check |
 | Apollo returns no enrichment | Use company website and any data from calls. Note "Company enrichment unavailable" in Fact-Check |
 | No volume data from any source | Mark all volume fields as "TBD" and flag: "Business case cannot be completed without volume data from prospect" |
@@ -606,7 +604,7 @@ info, auth requirement detection, structured response data, audit trail.
 
 ## Important Notes
 
-- **Direct API access to Fireflies, HubSpot, and Apollo is required. Keys stored in ~/.claude/.api-keys.json.** If any keys are missing or API calls fail, tell the user which service is unavailable and proceed with available sources.
+- **Direct API access to Fathom, HubSpot, and Apollo is required. Keys stored in ~/.claude/.api-keys.json.** If any keys are missing or API calls fail, tell the user which service is unavailable and proceed with available sources.
 - **This is a living document.** After generating, the user will likely want to iterate. Support edits, re-pulls, and version bumps.
 - **The SOW is not a contract.** It's a scoping document. Do not include legal terms, liability clauses, or binding language. If the prospect needs a contract, that's a separate step.
 - **Speed matters.** The user wants this generated quickly after calls, not days later. Optimize for fast data pulls and assembly.

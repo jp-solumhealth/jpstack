@@ -85,7 +85,7 @@ THEN (comportamiento):
 Elegir el copay cuyo mensaje contenga "freestanding"
 
 Ejemplo (evidencia):
-POM MRI, check 5586d696-7063-4581-b379-c04b953edb7d
+Imaging client, check <check-id>
 ```
 
 ## Known Trading Partner IDs

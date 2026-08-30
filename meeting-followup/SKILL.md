@@ -2,7 +2,7 @@
 name: meeting-followup
 description: >
   Automates post-meeting follow-up after any sales or customer call. Pulls the meeting
-  transcript from Fireflies, cross-references HubSpot deal/contact data and Apollo contact
+  transcript from Fathom, cross-references HubSpot deal/contact data and Apollo contact
   enrichment, runs a fact-check layer, and produces three deliverables: a plain-text
   follow-up email draft, HubSpot deal notes with stage/amount recommendations, and an
   internal debrief with buying signals, objections, competitor mentions, and next moves.
@@ -19,6 +19,24 @@ description: >
 Generate a complete post-meeting follow-up package: email draft, HubSpot notes, and
 internal debrief. All grounded in what was actually said on the call, cross-checked
 against CRM and enrichment data.
+
+## API Authentication
+
+Before making any API calls, read the key file:
+
+```bash
+cat ~/.claude/.api-keys.json
+```
+
+Parse the JSON and extract the keys needed for this skill:
+
+| Service    | Key Name         | Auth Header / Usage                                  |
+|------------|------------------|------------------------------------------------------|
+| HubSpot    | `HUBSPOT_KEY`    | `Authorization: Bearer <HUBSPOT_KEY>`                |
+| Fathom  | _none — MCP_  | _n/a — MCP_              |
+| Apollo     | `APOLLO_KEY`     | `X-Api-Key: <APOLLO_KEY>`                            |
+
+All API calls run via the Bash tool with `curl`. Pipe JSON responses through `python3 -c "import sys,json; ..."` for parsing and filtering.
 
 ## Core Principle
 
@@ -37,10 +55,10 @@ Determine which meeting the user wants to follow up on:
 
 1. If the user names a company or person, use that as the search term
 2. If the user says "my last meeting" or "today's call", search by recency
-3. If ambiguous, search Fireflies for recent calls and present options
+3. If ambiguous, search Fathom for recent calls and present options
 
 Extract from the user's request:
-- **Company name** (required — ask if not provided)
+- **Company name** (required -- ask if not provided)
 - **Person name** (optional, helps narrow search)
 - **Date** (optional, defaults to most recent match)
 
@@ -48,35 +66,74 @@ Extract from the user's request:
 
 Run all four data pulls simultaneously:
 
-**1A — Fireflies Transcript:**
+**1A -- Fathom Transcript:**
+
+Fetch recent transcripts and filter client-side by company/person name:
 
 ```
-fireflies_search: keyword:"{company_name}" scope:title limit:10
+# Fathom MCP — no curl, no API key. See ~/.claude/skills/_shared/fathom-meetings.md
+mcp__claude_ai_Fathom__list_meetings(
+  created_after: "<ISO8601 start of window>",
+  max_pages: 3,
+  include_summary: true,
+  include_action_items: true
+)
+# -> recording_id, title, date, url, recorded_by, calendar_invitees
+# Then, for verbatim quotes:
+mcp__claude_ai_Fathom__get_meeting_transcript(recording_id: <id>)
 ```
 
-If no results by company name, try:
+If no results by company name, repeat the search filtering by `{person_name}` instead.
+
+**Important Fathom notes:**
+- `summary.action_items` is a string, not an array. Parse accordingly.
+- `date` is a Unix millisecond timestamp. Convert with `python3 -c "import datetime; print(datetime.datetime.fromtimestamp(ts/1000))"`.
+
+To get the full transcript for a specific meeting by ID:
+
 ```
-fireflies_search: keyword:"{person_name}" scope:title limit:10
+# Fathom MCP — no curl, no API key. See ~/.claude/skills/_shared/fathom-meetings.md
+mcp__claude_ai_Fathom__list_meetings(
+  created_after: "<ISO8601 start of window>",
+  max_pages: 3,
+  include_summary: true,
+  include_action_items: true
+)
+# -> recording_id, title, date, url, recorded_by, calendar_invitees
+# Then, for verbatim quotes:
+mcp__claude_ai_Fathom__get_meeting_transcript(recording_id: <id>)
 ```
 
 From the matching meeting(s):
-- `fireflies_get_summary` for the meeting — get overview, action items, topics discussed
-- `fireflies_get_transcript` for the full transcript — needed for direct quotes and nuance
+- Get overview, action items, topics discussed from the summary
+- Get the full transcript sentences for direct quotes and nuance
 - Note: meeting ID, title, date, duration, attendees
 
-Also search for any PREVIOUS meetings with this company:
-```
-fireflies_search: keyword:"{company_name}" scope:title limit:20
-```
+Also search for any PREVIOUS meetings with this company by filtering the broader results list.
 Pull summaries of prior meetings to track action item progress and conversation continuity.
 
-**1B — HubSpot Deal & Contact Data:**
+**1B -- HubSpot Deal & Contact Data:**
 
 Search HubSpot for the company and associated contacts:
-```
-search_crm_objects: objectType:"companies" query:"{company_name}"
-search_crm_objects: objectType:"deals" query:"{company_name}"
-search_crm_objects: objectType:"contacts" query:"{company_name}"
+
+```bash
+# Search companies
+curl -s -X POST "https://api.hubapi.com/crm/v3/objects/companies/search" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <HUBSPOT_KEY>" \
+  -d '{"query": "{company_name}", "properties": ["name", "domain", "industry", "numberofemployees"]}'
+
+# Search deals
+curl -s -X POST "https://api.hubapi.com/crm/v3/objects/deals/search" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <HUBSPOT_KEY>" \
+  -d '{"query": "{company_name}", "properties": ["dealname", "dealstage", "amount", "closedate", "pipeline", "hubspot_owner_id"]}'
+
+# Search contacts
+curl -s -X POST "https://api.hubapi.com/crm/v3/objects/contacts/search" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <HUBSPOT_KEY>" \
+  -d '{"query": "{company_name}", "properties": ["firstname", "lastname", "email", "phone", "jobtitle", "company"]}'
 ```
 
 Extract:
@@ -87,16 +144,26 @@ Extract:
 - Any tasks or upcoming activities scheduled
 - Deal owner
 
-**1C — Apollo Contact Enrichment:**
+**1C -- Apollo Contact Enrichment:**
 
-For each attendee from the Fireflies transcript who is NOT from Solum Health:
-```
-apollo_people_match: email:"{attendee_email}"
+For each attendee from the Fathom transcript who is NOT from Solum Health:
+
+```bash
+# Match by email
+curl -s -X POST "https://api.apollo.io/v1/people/match" \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: <APOLLO_KEY>" \
+  -d '{"email": "{attendee_email}"}'
 ```
 
 Or if only name + company:
-```
-apollo_mixed_people_api_search: person_titles:[] person_locations:[] q_organization_name:"{company}" q_keywords:"{person_name}"
+
+```bash
+# Search by name and company
+curl -s -X POST "https://api.apollo.io/v1/mixed_people/search" \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: <APOLLO_KEY>" \
+  -d '{"q_organization_name": "{company}", "q_keywords": "{person_name}", "page": 1, "per_page": 10}'
 ```
 
 Extract:
@@ -105,7 +172,7 @@ Extract:
 - Company size, industry, funding stage
 - Other relevant contacts at the company (decision makers, champions)
 
-**1D — Prior Meeting Cross-Reference:**
+**1D -- Prior Meeting Cross-Reference:**
 
 If prior meetings exist with this company:
 - List action items from prior calls
@@ -118,7 +185,7 @@ If prior meetings exist with this company:
 Before generating any output, run these verification checks:
 
 **Attendee Verification:**
-- Compare attendee names from Fireflies against HubSpot contacts and Apollo data
+- Compare attendee names from Fathom against HubSpot contacts and Apollo data
 - If a name or title differs, use the most authoritative source (Apollo for titles, HubSpot for contact ownership)
 - Flag any attendees on the call who are NOT in HubSpot (suggest adding them)
 
@@ -159,7 +226,7 @@ into Gmail with Cmd+Shift+V and send without any formatting cleanup.
 1. Opening line referencing something specific from the call (NOT "great meeting today")
 2. 1-2 sentences recapping the key topic or problem discussed
 3. Specific next steps that were agreed upon, with owners and dates
-4. Any documents, materials, or information promised — mention them explicitly
+4. Any documents, materials, or information promised -- mention them explicitly
 5. Closing that sets up the next interaction naturally
 6. Sign-off as JP
 
@@ -179,7 +246,7 @@ into Gmail with Cmd+Shift+V and send without any formatting cleanup.
 - Product pitches or features not discussed on the call
 - "Please don't hesitate to reach out" or any similar filler
 
-**Example calibration (DO NOT copy verbatim — adapt to each call):**
+**Example calibration (DO NOT copy verbatim -- adapt to each call):**
 
 ```
 Hi Sarah,
@@ -216,7 +283,7 @@ a recommended CRM update.
 2. **Deal Stage Recommendation**
    - Current stage in HubSpot
    - Recommended stage after this meeting (with reasoning)
-   - Stage progression options: Appointment Scheduled → Qualified to Buy → Presentation Scheduled → Decision Maker Bought-In → Contract Sent → Closed Won / Closed Lost
+   - Stage progression options: Appointment Scheduled -> Qualified to Buy -> Presentation Scheduled -> Decision Maker Bought-In -> Contract Sent -> Closed Won / Closed Lost
    - Only recommend a stage change if the call clearly warrants it
 
 3. **Amount Update** (if pricing was discussed)
@@ -295,18 +362,18 @@ a recommended CRM update.
 
 Present the three deliverables in this order:
 
-1. **Internal Debrief first** — so JP sees the strategic picture before the tactical outputs
-2. **Follow-Up Email Draft** — clearly marked as ready to paste
-3. **HubSpot Deal Notes** — with specific fields to update
+1. **Internal Debrief first** -- so JP sees the strategic picture before the tactical outputs
+2. **Follow-Up Email Draft** -- clearly marked as ready to paste
+3. **HubSpot Deal Notes** -- with specific fields to update
 
 After presenting, ask:
 - "Want me to adjust the email tone or add anything?"
-- "Should I update the HubSpot deal with these notes?" (if HubSpot MCP supports writes)
+- "Should I update the HubSpot deal with these notes?"
 - "Any other attendees I should look up in Apollo?"
 
 ## Edge Cases
 
-**No Fireflies transcript found:**
+**No Fathom transcript found:**
 - Tell the user which searches were tried
 - Ask if the meeting was recorded on a different platform (Fathom, Zoom, etc.)
 - Offer to generate a follow-up based on what the user remembers (manual input mode)
@@ -327,19 +394,23 @@ After presenting, ask:
 
 **Very short call (under 10 minutes):**
 - Flag that the call was brief
-- Adjust expectations — shorter debrief, simpler email
+- Adjust expectations -- shorter debrief, simpler email
 - Check if the call was cut short or if it was intentionally brief
 
-## Required MCP Tools
+## Required API Endpoints
 
-This skill requires these MCP integrations to be connected:
-- **Fireflies** — for transcripts and summaries
-- **HubSpot** — for deal and contact data
-- **Apollo.io** — for contact enrichment
+This skill requires API access to these services (keys in `~/.claude/.api-keys.json`):
 
-If any are missing, tell the user which ones are needed and proceed with what's available.
-Generate the deliverables using whatever data sources are connected, and note what's
-missing in the output.
+| Service    | Endpoint                                                | Method | Purpose                        |
+|------------|---------------------------------------------------------|--------|--------------------------------|
+| Fathom  | `MCP: mcp__claude_ai_Fathom__*`                      | POST   | Transcripts and summaries      |
+| HubSpot    | `https://api.hubapi.com/crm/v3/objects/{type}/search`   | POST   | Deal, contact, company search  |
+| Apollo     | `https://api.apollo.io/v1/people/match`                 | POST   | Contact enrichment by email    |
+| Apollo     | `https://api.apollo.io/v1/mixed_people/search`          | POST   | Contact search by name/company |
+
+If any API key is missing from the keys file, tell the user which ones are needed and proceed
+with what's available. Generate the deliverables using whatever data sources are accessible,
+and note what's missing in the output.
 
 ## Important Notes
 
