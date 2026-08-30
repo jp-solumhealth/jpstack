@@ -1,419 +1,399 @@
 #!/usr/bin/env python3
 """
-auth_tracker.py — authorization visit-balance tracker.
+auth_tracker.py — correct Healthie's accrued visit count.
 
-Counts authorized visits when they OCCUR, never when they are scheduled, and fires
-a reauthorization trigger before the allotment runs out. Also answers the inverse
-question — "does this pending authorization actually need submitting?" — which is
-the manual triage step blocking automation on the Raintree side.
+Healthie already owns the authorization: the authorization number, the approved
+visit count, the start and stop dates, the referral flags, visits used and visits
+left. All of it lives on InsuranceAuthorizationType and all of it is fine.
 
-    python3 auth_tracker.py selftest      # the contract; must print ALL PASS
-    python3 auth_tracker.py demo          # the 10-authorized / 20-scheduled scenario
-    python3 auth_tracker.py triage        # premature-pending-auth triage walkthrough
+One number is wrong. Healthie's tracker accrues against a client's *scheduled and
+occurred* appointments, so a clinic given 10 visits that books 20 sees 20 consumed.
+This module recomputes that one number from occurred appointments only, writes it
+back, and raises a reauthorization alert when the corrected balance runs low.
 
-WHY THIS EXISTS
-    Authorizations are granted in visits. We tracked them in dates. A clinic given
-    10 visits could schedule 20, deliver all 20, and discover the overage only when
-    the claims denied. Two clients hit the same wall from opposite directions:
+    python3 auth_tracker.py selftest    # the contract; must print ALL PASS
+    python3 auth_tracker.py demo        # 10 authorized, 20 booked, 6 occurred
+    python3 auth_tracker.py queries     # print the GraphQL documents
 
-      - Visit-based tracking asked for repeatedly since June; escalated to the
-        top priority on the Aug 28 touchpoint. Needs a burn-down and a trigger.
-      - A coordinator manually triages every pending authorization, dismissing the
-        ones whose current auth still has visits left. That is a human performing
-        this module's arithmetic, and it blocks the whole automation pipeline.
+WHAT THIS DELIBERATELY DOES NOT DO
+    It does not keep its own authorization records, visit limits, referral state or
+    approved counts. Healthie has those and they are correct. Re-storing them would
+    create a second source of truth to reconcile, which is a bigger problem than the
+    one being fixed. This reads Healthie, corrects one field, writes it back.
 
-    Same counter. Both problems.
+FIELD NAMES MARKED "unverified"
+    Healthie's docs and both API endpoints are unreachable from the build
+    environment, so InsuranceAuthorizationType's GraphQL field names below are
+    inferred from its documented UI fields, not read from the schema. The object,
+    the mutation `createInsuranceAuthorization`, `pm_status` and its values, and the
+    webhook events are all confirmed. Run `queries` and check the marked names
+    against introspection before wiring this to a live key.
 
-THE THREE RULES THAT MATTER
-    1. Only an appointment in a terminal OCCURRED state consumes an allotment.
-       Scheduled, cancelled and no-show never decrement.
-    2. Occurring is necessary but not sufficient. Consumption follows the billed
-       codes: an evaluation-only visit (97161-97163) does not consume, because the
-       payer does not require prior auth for it unless treatment codes ride along
-       on the same date of service.
-    3. The ledger is append-only. A visit restatused after the fact reverses its
-       entry rather than mutating a counter, so every balance is auditable and
-       every correction is reversible.
-
-Requirements, open unknowns and provenance: ../references/requirements.md
+Requirements, provenance and the API assessment: ../references/requirements.md
 """
 from __future__ import annotations
 import argparse, sys
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from enum import Enum
-from typing import Iterable
+from typing import Protocol
 
-# ══════════════════════════════════════════════════ STATUS + CODE SEMANTICS
+# ══════════════════════════════════════════════════ TRANSPORT
 
-class ApptStatus(str, Enum):
-    SCHEDULED   = "scheduled"
-    CONFIRMED   = "confirmed"
-    OCCURRED    = "occurred"        # the only status that can consume
-    NO_SHOW     = "no_show"
-    CANCELLED   = "cancelled"
-    LATE_CANCEL = "late_cancelled"  # billable to some payers; does not consume in v1
-    RESCHEDULED = "rescheduled"
+ENDPOINT         = "https://api.gethealthie.com/graphql"
+SANDBOX_ENDPOINT = "https://staging-api.gethealthie.com/graphql"
 
-CONSUMING_STATUSES = frozenset({ApptStatus.OCCURRED})
+# Pin the version. Without the header Healthie serves the 2024-06-01 baseline,
+# which paginates several of the fields below differently.
+HEADERS = {
+    "Content-Type": "application/json",
+    "Authorization": "Basic <API_KEY>",     # literal "Basic" + the raw key, not base64
+    "AuthorizationSource": "API",
+    "Healthie-GraphQL-API-Version": "2026-01-01",
+    # "AuthorizationShard": "<SHARD_ID>",   # sharded customers only
+}
 
-# PT evaluation codes. An eval-only date of service does not require prior auth,
-# so it does not draw down the allotment. If any other treatment code is billed on
-# the same date, the visit consumes normally.
+# ══════════════════════════════════════════════════ GRAPHQL DOCUMENTS
+
+# Read the authorization Healthie already holds. Reachable from both User and
+# Policy; Policy is preferred because a patient with two policies has one
+# authorization per policy.
+#   confirmed:   user, insurance_authorization
+#   unverified:  every field inside insurance_authorization
+GQL_AUTHORIZATION = """
+query AuthorizationForPatient($id: ID!) {
+  user(id: $id) {
+    id
+    insurance_authorization {
+      id
+      authorization_number      # unverified
+      number_of_visits          # unverified — the approved allotment
+      visits_used               # unverified — the number this module corrects
+      visits_left               # unverified
+      start_date                # unverified
+      end_date                  # unverified
+      referral_required         # unverified
+      referral_obtained         # unverified
+    }
+  }
+}
+"""
+
+# Every appointment in the authorization window. We ask for pm_status and count
+# ourselves rather than trusting a server-side filter, because the filter argument
+# names are the least certain part of this document and a wrong filter fails silent
+# — it returns fewer rows, which reads as a healthier balance than the truth.
+#   confirmed:   appointments, pm_status, PageInfo, cursor pagination params
+#   unverified:  the filter argument names
+GQL_OCCURRED_APPOINTMENTS = """
+query AppointmentsInWindow(
+  $userId: ID!, $startDate: String!, $endDate: String!,
+  $after: Cursor, $pageSize: Int!
+) {
+  appointments(
+    user_id: $userId
+    start_date: $startDate      # unverified
+    end_date: $endDate          # unverified
+    should_paginate: true
+    page_size: $pageSize
+    after: $after
+  ) {
+    id
+    datetime
+    pm_status
+    appointment_type { id name }
+  }
+  appointmentsCount(user_id: $userId)
+}
+"""
+
+# Write the corrected number back.
+#   unverified:  that updateInsuranceAuthorization exists at all. createInsurance-
+#                Authorization is confirmed by name; update is convention, not fact.
+#                If it does not exist, the fallback is delete-and-recreate, which is
+#                materially worse under Healthie's absent idempotency contract and
+#                should be escalated rather than quietly implemented.
+GQL_UPDATE_AUTHORIZATION = """
+mutation CorrectVisitsUsed($input: updateInsuranceAuthorizationInput!) {
+  updateInsuranceAuthorization(input: $input) {
+    insurance_authorization { id visits_used visits_left }
+    messages { field message }
+  }
+}
+"""
+
+# Healthie posts only { resource_id, resource_id_type, event_type } — no status, no
+# body. Each event costs a follow-up query. There is no appointment.status_changed
+# event, so appointment.updated is the transition signal and the diff is ours to do.
+GQL_REGISTER_WEBHOOK = """
+mutation RegisterWebhook($input: createWebhookInput!) {
+  createWebhook(input: $input) {
+    webhook { id url event_type }
+    messages { field message }
+  }
+}
+"""
+
+WEBHOOK_EVENTS = (
+    "appointment.updated",              # a visit may have become Occurred
+    "appointment.created",              # booking — drives the over-booking warning
+    "appointment.deleted",
+    "insurance_authorization.updated",  # someone edited the auth in the Healthie UI
+    "insurance_authorization.created",
+)
+
+# ══════════════════════════════════════════════════ THE ONE RULE
+
+# Confirmed pm_status values. "Late Cancellation" and "Checked-In" exist only if
+# enabled on the account — neither accrues here, but Late Cancellation is billable
+# to some payers and needs a per-client decision before launch.
+OCCURRED       = "Occurred"
+NON_ACCRUING   = ("No-Show", "Re-Scheduled", "Cancelled", "Late Cancellation",
+                  "Checked-In", None, "")
+
+# Evaluation-only dates of service need no prior authorization unless treatment
+# codes are billed the same day. Off by default: it is a real payer rule but it
+# needs the claim to resolve, and this module's remit is the scheduled/occurred
+# correction alone. Turn on only with claim data available.
 EVAL_ONLY_CODES = frozenset({"97161", "97162", "97163"})
 
 
-class Basis(str, Enum):
-    """How a consumption decision was reached — recorded per ledger row so the
-    balance's own reliability can be audited later."""
-    BILLED_CODES = "billed_codes"   # authoritative: we saw what was billed
-    ATTENDANCE   = "attendance"     # fallback: status only, codes unknown
+def accrues(pm_status: str | None, *, billed_codes: tuple[str, ...] = (),
+            apply_eval_rule: bool = False) -> bool:
+    """The correction, in one function. Scheduled never accrues; occurred does."""
+    if pm_status != OCCURRED:
+        return False
+    if apply_eval_rule and billed_codes and all(c in EVAL_ONLY_CODES for c in billed_codes):
+        return False
+    return True
 
 
-class Severity(str, Enum):
-    SOFT = "soft"   # limit can be extended with a medical-necessity review
-    HARD = "hard"   # hard stop; stop scheduling
-
-
-class TriggerKind(str, Enum):
-    AUTH_EXHAUSTING = "auth_exhausting"
-    PLAN_LIMIT       = "plan_limit_approaching"
-    PA_THRESHOLD     = "pa_required_after_n"
-    MNR_THRESHOLD    = "mnr_required_after_n"
-
-
-class Triage(str, Enum):
-    DISMISS       = "dismiss"        # current auth still covers it
-    HOLD_FOR_DOCS = "hold_for_docs"  # cannot submit, documentation missing
-    SUBMIT        = "submit"         # genuinely needs a new authorization
-
-
-# ══════════════════════════════════════════════════ DOMAIN OBJECTS
+# ══════════════════════════════════════════════════ HEALTHIE SHAPES
 
 @dataclass(frozen=True)
-class Appointment:
+class HealthieAppointment:
     id: str
-    patient_id: str
     on: date
-    status: ApptStatus
-    program: str = "PT"              # service line / Raintree "program"
-    location: str = ""
-    billed_codes: tuple[str, ...] = ()   # empty => codes unknown, attendance basis
-
-    def is_eval_only(self) -> bool:
-        return bool(self.billed_codes) and all(c in EVAL_ONLY_CODES for c in self.billed_codes)
+    pm_status: str | None
+    billed_codes: tuple[str, ...] = ()
 
 
 @dataclass
-class Authorization:
+class HealthieAuthorization:
+    """Mirrors InsuranceAuthorizationType. We never author these fields except
+    visits_used and visits_left."""
     id: str
     patient_id: str
-    payer: str
-    program: str
-    approved_visits: int
-    valid_from: date
-    valid_to: date
-    hard_limit: bool = True
-    # Visits consumed before this system started counting. Until an opening balance
-    # is confirmed, the auth reports a balance but never fires a trigger — an
-    # unconfirmed balance is a guess, and a guess that pages someone is worse than
-    # silence.
-    opening_consumed: int = 0
-    opening_confirmed: bool = False
-    # Thresholds captured by the benefits check but never previously evaluated.
-    pa_required_after: int | None = None
-    mnr_required_after: int | None = None
-    active: bool = True
+    authorization_number: str
+    number_of_visits: int
+    visits_used: int              # as Healthie currently has it — usually wrong
+    start_date: date
+    end_date: date
+    referral_required: bool = False
+    referral_obtained: bool = False
 
-    def covers(self, appt: Appointment) -> bool:
-        return (self.active
-                and self.program == appt.program
-                and self.valid_from <= appt.on <= self.valid_to)
-
-
-@dataclass
-class PlanLimit:
-    """Benefit-year visit cap. Counts visits at EVERY provider, so our own ledger
-    is a floor, not the truth. When the payer reports a used-to-date figure, that
-    number wins."""
-    patient_id: str
-    benefit_year: int
-    limit_visits: int
-    hard_limit: bool = True
-    payer_reported_used: int | None = None
-    payer_reported_on: date | None = None
-    opening_confirmed: bool = False
+    @property
+    def visits_left(self) -> int:
+        return self.number_of_visits - self.visits_used
 
 
 @dataclass(frozen=True)
-class LedgerEntry:
-    appointment_id: str
-    auth_id: str
-    on: date
-    delta: int          # +1 consume, -1 reversal
-    basis: Basis
-    reason: str
+class Correction:
+    patient_id: str
+    authorization_id: str
+    healthie_visits_used: int     # what Healthie said
+    corrected_visits_used: int    # occurred only
+    corrected_visits_left: int
+    scheduled_not_occurred: int   # the size of the error
+    opening_adjustment: int
+    written: bool
+
+    @property
+    def drift(self) -> int:
+        return self.healthie_visits_used - self.corrected_visits_used
+
+    def __str__(self) -> str:
+        return (f"{self.authorization_id}: Healthie said {self.healthie_visits_used} used, "
+                f"actually {self.corrected_visits_used} "
+                f"({self.corrected_visits_left} left, drift {self.drift:+d})")
 
 
 @dataclass(frozen=True)
-class Trigger:
-    kind: TriggerKind
-    severity: Severity
+class Alert:
     patient_id: str
-    auth_id: str | None
-    remaining: int
-    threshold: int
-    projected_exhaustion: date | None
-    missing_documents: tuple[str, ...]
+    authorization_id: str
+    authorization_number: str
+    visits_left: int
+    end_date: date
+    referral_missing: bool
     message: str
 
-    def ready_to_submit(self) -> bool:
-        return not self.missing_documents
+
+class HealthieClient(Protocol):
+    """The four calls this needs. Implement against the documents above."""
+    def authorization(self, patient_id: str) -> HealthieAuthorization | None: ...
+    def appointments(self, patient_id: str, start: date, end: date
+                     ) -> list[HealthieAppointment]: ...
+    def update_visits_used(self, authorization_id: str, used: int, left: int) -> list[dict]: ...
 
 
 # ══════════════════════════════════════════════════ THE ENGINE
 
-class AuthTracker:
-    """Append-only ledger plus derived balances. Every public method is idempotent:
-    replaying the same appointment state twice changes nothing."""
+class VisitAccrual:
+    """Recompute visits_used from occurred appointments and push it back."""
 
-    REAUTH_THRESHOLD = 3        # fire at <= 3 visits remaining
-    EXPIRY_HORIZON   = 30       # "not expiring soon" for triage, in days
-    CADENCE_WINDOW   = 42       # days of history used to estimate visit cadence
+    THRESHOLD = 3   # alert at this many visits left or fewer
 
-    def __init__(self, *, threshold: int = REAUTH_THRESHOLD) -> None:
+    def __init__(self, client: HealthieClient, *, threshold: int = THRESHOLD,
+                 apply_eval_rule: bool = False) -> None:
+        self.client = client
         self.threshold = threshold
-        self.auths: dict[str, Authorization] = {}
-        self.plan_limits: dict[tuple[str, int], PlanLimit] = {}
-        self.ledger: list[LedgerEntry] = []
-        self._counted: dict[str, str] = {}          # appointment_id -> auth_id
-        self._fired: dict[tuple[str, str], int] = {}  # (kind, key) -> remaining at last fire
-        self.unattributed: list[Appointment] = []
-        self._documents: dict[str, set[str]] = {}   # patient_id -> documents on file
+        self.apply_eval_rule = apply_eval_rule
+        # Healthie does not deduct visits delivered before its tracker was switched
+        # on, and neither can we — those appointments may predate the integration
+        # entirely. Carried per authorization, entered once by whoever onboards the
+        # client. Without it, every mid-episode patient launches with a balance that
+        # is too generous, which is the failure mode that loses trust fastest.
+        self.opening: dict[str, int] = {}
 
-    # ---------------------------------------------------------------- setup
+    def set_opening(self, authorization_id: str, visits_already_used: int) -> None:
+        self.opening[authorization_id] = visits_already_used
 
-    def add_authorization(self, auth: Authorization) -> None:
-        self.auths[auth.id] = auth
+    # ------------------------------------------------------------------ counting
 
-    def add_plan_limit(self, pl: PlanLimit) -> None:
-        self.plan_limits[(pl.patient_id, pl.benefit_year)] = pl
+    def count_occurred(self, appts: list[HealthieAppointment]) -> int:
+        return sum(1 for a in appts
+                   if accrues(a.pm_status, billed_codes=a.billed_codes,
+                              apply_eval_rule=self.apply_eval_rule))
 
-    def set_documents(self, patient_id: str, documents: Iterable[str]) -> None:
-        self._documents[patient_id] = set(documents)
+    def count_scheduled_not_occurred(self, appts: list[HealthieAppointment]) -> int:
+        """The size of Healthie's error — booked but not yet delivered."""
+        return sum(1 for a in appts if a.pm_status not in (OCCURRED,)
+                   and a.pm_status not in ("No-Show", "Cancelled", "Re-Scheduled"))
 
-    def confirm_opening_balance(self, auth_id: str, consumed: int) -> None:
-        """Backfill. Every patient mid-episode at launch has consumed visits this
-        system never saw; without this the balance is wrong for the whole panel on
-        day one, which is worse than shipping no balance at all."""
-        a = self.auths[auth_id]
-        a.opening_consumed = consumed
-        a.opening_confirmed = True
+    # ------------------------------------------------------------------ the sync
 
-    # ------------------------------------------------------- consumption rule
-
-    @staticmethod
-    def consumption(appt: Appointment) -> tuple[bool, Basis, str]:
-        """Does this appointment draw down an allotment? Returns (consumes, basis, why)."""
-        if appt.status not in CONSUMING_STATUSES:
-            return False, Basis.ATTENDANCE, f"status {appt.status.value} is not occurred"
-        if appt.billed_codes:
-            if appt.is_eval_only():
-                return False, Basis.BILLED_CODES, "evaluation-only date of service"
-            return True, Basis.BILLED_CODES, "treatment codes billed"
-        # Codes unknown. Count it — under-counting silently authorizes overage —
-        # but record the weaker basis so accuracy can be measured.
-        return True, Basis.ATTENDANCE, "occurred; billed codes unknown"
-
-    # ----------------------------------------------------------- attribution
-
-    def attribute(self, appt: Appointment) -> Authorization | None:
-        """Which authorization does this visit draw against? Deterministic: among
-        the authorizations covering the visit, prefer one with visits left, then
-        the one expiring soonest, then the lowest id."""
-        candidates = [a for a in self.auths.values()
-                      if a.patient_id == appt.patient_id and a.covers(appt)]
-        if not candidates:
-            return None
-        candidates.sort(key=lambda a: (self.remaining(a.id) <= 0, a.valid_to, a.id))
-        return candidates[0]
-
-    # -------------------------------------------------------------- balances
-
-    def consumed(self, auth_id: str) -> int:
-        a = self.auths[auth_id]
-        return a.opening_consumed + sum(e.delta for e in self.ledger if e.auth_id == auth_id)
-
-    def remaining(self, auth_id: str) -> int:
-        return self.auths[auth_id].approved_visits - self.consumed(auth_id)
-
-    def plan_consumed(self, patient_id: str, year: int) -> int:
-        pl = self.plan_limits.get((patient_id, year))
-        if pl and pl.payer_reported_used is not None:
-            # The payer sees every provider; we only see ours.
-            return pl.payer_reported_used
-        return sum(e.delta for e in self.ledger
-                   if e.on.year == year
-                   and self.auths[e.auth_id].patient_id == patient_id)
-
-    def plan_remaining(self, patient_id: str, year: int) -> int | None:
-        pl = self.plan_limits.get((patient_id, year))
-        if pl is None:
-            return None
-        return pl.limit_visits - self.plan_consumed(patient_id, year)
-
-    # ------------------------------------------------------------- ingestion
-
-    def record(self, appt: Appointment) -> list[Trigger]:
-        """Ingest an appointment's current state. Safe to replay."""
-        consumes, basis, why = self.consumption(appt)
-        prior_auth_id = self._counted.get(appt.id)
-
-        if not consumes:
-            if prior_auth_id:      # was counted, has since been restatused or recoded
-                self.ledger.append(LedgerEntry(appt.id, prior_auth_id, appt.on, -1,
-                                               basis, f"reversal: {why}"))
-                del self._counted[appt.id]
-            return []
-
-        if prior_auth_id:          # already counted; nothing to do
-            return []
-
-        auth = self.attribute(appt)
+    def sync(self, patient_id: str, *, write: bool = True
+             ) -> tuple[Correction, Alert | None]:
+        auth = self.client.authorization(patient_id)
         if auth is None:
-            # No authorization covers this visit. Scheduling outside the current
-            # auth window is exactly what raises a premature pending auth upstream.
-            self.unattributed.append(appt)
-            return []
+            raise LookupError(f"no authorization on file for {patient_id}")
 
-        self.ledger.append(LedgerEntry(appt.id, auth.id, appt.on, +1, basis, why))
-        self._counted[appt.id] = auth.id
-        return self.evaluate(auth.id, as_of=appt.on)
+        # Capture what Healthie said before the writeback below mutates it — the
+        # drift figure is the whole point of this run and it is measured against
+        # the number we found, not the number we left behind.
+        healthie_said = auth.visits_used
 
-    def record_many(self, appts: Iterable[Appointment]) -> list[Trigger]:
-        out: list[Trigger] = []
-        for a in appts:
-            out.extend(self.record(a))
-        return out
+        appts = self.client.appointments(patient_id, auth.start_date, auth.end_date)
+        opening = self.opening.get(auth.id, 0)
+        used = self.count_occurred(appts) + opening
+        # Never report more consumed than was approved, and never a negative balance.
+        used = max(0, min(used, auth.number_of_visits))
+        left = auth.number_of_visits - used
 
-    # ------------------------------------------------------------ evaluation
+        written = False
+        if write and used != auth.visits_used:
+            # No idempotency contract anywhere in this API, so this is a read-then-
+            # write against a value we just read. It is safe only because it is
+            # idempotent by construction: writing the same corrected number twice is
+            # a no-op, and we skip the call entirely when nothing changed.
+            messages = self.client.update_visits_used(auth.id, used, left)
+            # A validation failure is HTTP 200 with an empty errors[] and a populated
+            # messages list. Branching on transport errors alone reports a writeback
+            # that never happened.
+            if messages:
+                raise RuntimeError(f"updateInsuranceAuthorization rejected: {messages}")
+            written = True
 
-    def evaluate(self, auth_id: str, *, as_of: date) -> list[Trigger]:
-        auth = self.auths[auth_id]
-        out: list[Trigger] = []
-        remaining = self.remaining(auth_id)
-        used = self.consumed(auth_id)
+        correction = Correction(
+            patient_id=patient_id,
+            authorization_id=auth.id,
+            healthie_visits_used=healthie_said,
+            corrected_visits_used=used,
+            corrected_visits_left=left,
+            scheduled_not_occurred=self.count_scheduled_not_occurred(appts),
+            opening_adjustment=opening,
+            written=written,
+        )
+        return correction, self._alert(auth, left)
 
-        if auth.opening_confirmed and remaining <= self.threshold:
-            out.extend(self._fire(
-                TriggerKind.AUTH_EXHAUSTING, auth.id, remaining, self.threshold,
-                Severity.HARD if auth.hard_limit else Severity.SOFT, auth, as_of,
-                f"{remaining} visit(s) left on {auth.id} ({auth.payer}); reauthorize now"))
-
-        for kind, after in ((TriggerKind.PA_THRESHOLD, auth.pa_required_after),
-                            (TriggerKind.MNR_THRESHOLD, auth.mnr_required_after)):
-            if after is not None and used >= after:
-                out.extend(self._fire(
-                    kind, f"{auth.id}:{kind.value}", after - used, after,
-                    Severity.SOFT, auth, as_of,
-                    f"{used} visits used; {kind.value.replace('_', ' ')} at {after}"))
-
-        year = as_of.year
-        pl = self.plan_limits.get((auth.patient_id, year))
-        if pl and pl.opening_confirmed:
-            pr = self.plan_remaining(auth.patient_id, year)
-            if pr is not None and pr <= self.threshold:
-                out.extend(self._fire(
-                    TriggerKind.PLAN_LIMIT, f"{auth.patient_id}:{year}", pr, self.threshold,
-                    Severity.HARD if pl.hard_limit else Severity.SOFT, auth, as_of,
-                    f"{pr} visit(s) left on the {year} plan cap for {auth.patient_id}"))
-        return out
-
-    def _fire(self, kind, key, remaining, threshold, severity, auth, as_of, msg):
-        """Fire once per crossing. Re-fires only when the balance drops further, so
-        a coordinator is not paged three times for the same auth."""
-        seen = self._fired.get((kind.value, key))
-        if seen is not None and remaining >= seen:
-            return []
-        self._fired[(kind.value, key)] = remaining
-        yield Trigger(
-            kind=kind, severity=severity, patient_id=auth.patient_id, auth_id=auth.id,
-            remaining=remaining, threshold=threshold,
-            projected_exhaustion=self.project_exhaustion(auth.id, as_of),
-            missing_documents=self.missing_documents(auth.patient_id),
-            message=msg,
+    def _alert(self, auth: HealthieAuthorization, left: int) -> Alert | None:
+        if left > self.threshold:
+            return None
+        missing_referral = auth.referral_required and not auth.referral_obtained
+        note = " Referral required and not on file." if missing_referral else ""
+        return Alert(
+            patient_id=auth.patient_id,
+            authorization_id=auth.id,
+            authorization_number=auth.authorization_number,
+            visits_left=left,
+            end_date=auth.end_date,
+            referral_missing=missing_referral,
+            message=(f"{left} visit(s) left on authorization {auth.authorization_number} "
+                     f"(expires {auth.end_date}). Reauthorize now.{note}"),
         )
 
-    # --------------------------------------------------------------- support
+    # ---------------------------------------------------------------- over-booking
 
-    REQUIRED_DOCS = ("signed_progress_note", "treatment_plan")
+    def overbooked_by(self, patient_id: str) -> int:
+        """Booked beyond what is authorized. Fires off appointment.created, before
+        a single unauthorized visit has been delivered — which is the difference
+        between preventing the loss and reporting it."""
+        auth = self.client.authorization(patient_id)
+        if auth is None:
+            return 0
+        appts = self.client.appointments(patient_id, auth.start_date, auth.end_date)
+        committed = self.count_occurred(appts) + self.count_scheduled_not_occurred(appts)
+        committed += self.opening.get(auth.id, 0)
+        return max(0, committed - auth.number_of_visits)
 
-    def missing_documents(self, patient_id: str) -> tuple[str, ...]:
-        """An authorization cannot be submitted without these on file. Surfacing it
-        on the trigger is what turns an alert into something actionable."""
-        have = self._documents.get(patient_id, set())
-        return tuple(d for d in self.REQUIRED_DOCS if d not in have)
 
-    def cadence_per_week(self, auth_id: str, as_of: date) -> float | None:
-        """Visits per week over the recent window. Three visits remaining is five
-        days of runway at 3x/week and three weeks at 1x/week — the same number
-        means very different lead time against a payer's turnaround."""
-        window_start = as_of - timedelta(days=self.CADENCE_WINDOW)
-        dates = sorted(e.on for e in self.ledger
-                       if e.auth_id == auth_id and e.delta > 0 and e.on >= window_start)
-        if len(dates) < 2:
-            return None
-        span_days = max((dates[-1] - dates[0]).days, 1)
-        return len(dates) / (span_days / 7.0)
+# ══════════════════════════════════════════════════ TEST DOUBLE
 
-    def project_exhaustion(self, auth_id: str, as_of: date) -> date | None:
-        rate = self.cadence_per_week(auth_id, as_of)
-        remaining = self.remaining(auth_id)
-        if not rate or remaining <= 0:
-            return None
-        return as_of + timedelta(days=round(remaining / rate * 7))
+class FakeHealthie:
+    """Stands in for the GraphQL client, including its worst habit: reporting
+    scheduled appointments as consumed."""
 
-    # ----------------------------------------------------------------- triage
+    def __init__(self, auth: HealthieAuthorization, appts: list[HealthieAppointment]):
+        self._auth, self._appts, self.writes = auth, appts, []
 
-    def triage_pending(self, patient_id: str, program: str, as_of: date) -> tuple[Triage, str]:
-        """Should this pending authorization actually be submitted?
+    def authorization(self, patient_id: str) -> HealthieAuthorization | None:
+        return self._auth if self._auth.patient_id == patient_id else None
 
-        Replaces the manual step a coordinator performs on every case: dismiss it
-        when the current authorization still has visits and is not expiring soon;
-        hold it when the documentation is not there yet; otherwise submit."""
-        live = [a for a in self.auths.values()
-                if a.patient_id == patient_id and a.program == program and a.active
-                and a.valid_from <= as_of <= a.valid_to]
-        if live:
-            live.sort(key=lambda a: a.valid_to)
-            cur = live[0]
-            remaining = self.remaining(cur.id)
-            days_left = (cur.valid_to - as_of).days
-            if remaining > self.threshold and days_left > self.EXPIRY_HORIZON:
-                return (Triage.DISMISS,
-                        f"{cur.id} still has {remaining} visits and {days_left} days; "
-                        f"scheduled beyond the window is not a reason to submit")
-        missing = self.missing_documents(patient_id)
-        if missing:
-            return Triage.HOLD_FOR_DOCS, "missing " + ", ".join(missing)
-        return Triage.SUBMIT, "no covering authorization with visits remaining"
+    def appointments(self, patient_id, start, end) -> list[HealthieAppointment]:
+        return [a for a in self._appts if start <= a.on <= end]
 
-    # ------------------------------------------------------------- reporting
+    def update_visits_used(self, authorization_id: str, used: int, left: int) -> list[dict]:
+        self.writes.append((authorization_id, used, left))
+        self._auth.visits_used = used
+        return []
 
-    def balance_report(self, auth_id: str, as_of: date) -> str:
-        a = self.auths[auth_id]
-        rem, used = self.remaining(auth_id), self.consumed(auth_id)
-        rate = self.cadence_per_week(auth_id, as_of)
-        proj = self.project_exhaustion(auth_id, as_of)
-        conf = "" if a.opening_confirmed else "  ⚠ opening balance unconfirmed — no triggers"
-        bar = "█" * max(rem, 0) + "·" * min(used, a.approved_visits)
-        return (f"  {a.id}  {a.payer:<18} {a.program}\n"
-                f"    approved {a.approved_visits:>3}   used {used:>3}   remaining {rem:>3}   [{bar}]\n"
-                f"    cadence {rate:.1f}/wk   projected exhaustion {proj}" .replace("None", "n/a")
-                + conf)
+    def healthie_native_count(self) -> int:
+        """What Healthie's own tracker would say: scheduled AND occurred."""
+        return sum(1 for a in self._appts
+                   if a.pm_status not in ("No-Show", "Cancelled", "Re-Scheduled"))
 
 
 # ══════════════════════════════════════════════════ SELF-TEST — THE CONTRACT
+
+def _fixture(*, approved=10, occurred=0, scheduled=0, noshow=0, cancelled=0,
+             healthie_used=None, referral_required=False, referral_obtained=False):
+    D = date(2026, 9, 1)
+    auth = HealthieAuthorization(
+        id="IA-1", patient_id="P1", authorization_number="AUTH-4471",
+        number_of_visits=approved, visits_used=0, start_date=D,
+        end_date=D + timedelta(days=90),
+        referral_required=referral_required, referral_obtained=referral_obtained)
+    appts, n = [], 0
+    for status, count in ((OCCURRED, occurred), ("Scheduled", scheduled),
+                          ("No-Show", noshow), ("Cancelled", cancelled)):
+        for _ in range(count):
+            appts.append(HealthieAppointment(f"a{n}", D + timedelta(days=n), status,
+                                             billed_codes=("97110",)))
+            n += 1
+    client = FakeHealthie(auth, appts)
+    auth.visits_used = client.healthie_native_count() if healthie_used is None else healthie_used
+    return client, auth
+
 
 def selftest() -> int:
     fails: list[str] = []
@@ -423,145 +403,95 @@ def selftest() -> int:
         if not cond:
             fails.append(name)
 
+    print("\n  ── the correction ──")
+    client, auth = _fixture(approved=10, occurred=6, scheduled=14)
+    check("Healthie's own count includes the scheduled ones", auth.visits_used == 20)
+    corr, alert = VisitAccrual(client).sync("P1")
+    check("corrected count is the 6 that occurred", corr.corrected_visits_used == 6)
+    check("balance is 4, not -10", corr.corrected_visits_left == 4)
+    check("drift is reported", corr.drift == 14)
+    check("the write happened", corr.written and client.writes == [("IA-1", 6, 4)])
+    check("no alert at 4 remaining", alert is None)
+
+    print("\n  ── nothing else accrues ──")
+    client, _ = _fixture(approved=10, occurred=3, scheduled=5, noshow=4, cancelled=6)
+    corr, _ = VisitAccrual(client).sync("P1")
+    check("no-shows and cancellations never accrue", corr.corrected_visits_used == 3)
+    for status in NON_ACCRUING:
+        if not accrues(status):
+            continue
+        fails.append(f"{status} accrued")
+    check("no non-accruing status slips through", not any("accrued" in f for f in fails))
+    check("only the exact string 'Occurred' accrues",
+          accrues("Occurred") and not accrues("occurred") and not accrues("Scheduled"))
+
+    print("\n  ── idempotence ──")
+    client, _ = _fixture(approved=10, occurred=6, scheduled=4)
+    acc = VisitAccrual(client)
+    acc.sync("P1")
+    corr2, _ = acc.sync("P1")
+    check("a second sync writes nothing", len(client.writes) == 1 and not corr2.written)
+    check("...and reports the same balance", corr2.corrected_visits_used == 6)
+
+    print("\n  ── the alert ──")
+    client, _ = _fixture(approved=10, occurred=7, scheduled=6)
+    corr, alert = VisitAccrual(client).sync("P1")
+    check("fires at exactly 3 remaining", alert is not None and alert.visits_left == 3)
+    check("carries the authorization number a coordinator needs",
+          alert.authorization_number == "AUTH-4471")
+    client, _ = _fixture(approved=10, occurred=8, referral_required=True)
+    _, alert = VisitAccrual(client).sync("P1")
+    check("flags a required referral that is not on file", alert.referral_missing)
+    check("...and says so in the message", "Referral required" in alert.message)
+
+    print("\n  ── opening balance ──")
+    client, _ = _fixture(approved=10, occurred=2, scheduled=3)
+    acc = VisitAccrual(client)
+    acc.set_opening("IA-1", 6)
+    corr, alert = acc.sync("P1")
+    check("visits delivered before we started counting are carried", corr.corrected_visits_used == 8)
+    check("...and can push the balance into alert range", alert is not None)
+    check("the adjustment is visible, not hidden", corr.opening_adjustment == 6)
+
+    print("\n  ── never reports an impossible balance ──")
+    client, _ = _fixture(approved=10, occurred=14)
+    corr, _ = VisitAccrual(client).sync("P1")
+    check("consumed is capped at approved", corr.corrected_visits_used == 10)
+    check("balance floors at zero, never negative", corr.corrected_visits_left == 0)
+
+    print("\n  ── over-booking, before any visit is delivered ──")
+    client, _ = _fixture(approved=10, occurred=0, scheduled=20)
+    acc = VisitAccrual(client)
+    check("20 booked against 10 authorized is caught at booking time",
+          acc.overbooked_by("P1") == 10)
+    client, _ = _fixture(approved=10, occurred=2, scheduled=5)
+    check("booking within the allotment is not flagged",
+          VisitAccrual(client).overbooked_by("P1") == 0)
+
+    print("\n  ── writeback failures are not silent ──")
+    client, _ = _fixture(approved=10, occurred=5, scheduled=3)
+    client.update_visits_used = lambda *_a: [{"field": "visits_used", "message": "invalid"}]
+    try:
+        VisitAccrual(client).sync("P1")
+        check("a populated messages list raises", False)
+    except RuntimeError as e:
+        check("a populated messages list raises", "rejected" in str(e))
+
+    print("\n  ── read-only mode ──")
+    client, _ = _fixture(approved=10, occurred=6, scheduled=4)
+    corr, _ = VisitAccrual(client).sync("P1", write=False)
+    check("shadow run computes without writing",
+          corr.corrected_visits_used == 6 and not corr.written and client.writes == [])
+
+    print("\n  ── the evaluation rule stays off unless asked for ──")
     D = date(2026, 9, 1)
-    def auth(**kw):
-        base = dict(id="A1", patient_id="P1", payer="Aetna", program="PT",
-                    approved_visits=10, valid_from=D, valid_to=D + timedelta(days=90),
-                    opening_confirmed=True)
-        base.update(kw)
-        return Authorization(**base)
-
-    def appt(i, status=ApptStatus.OCCURRED, day=0, codes=("97110",), patient="P1", program="PT"):
-        return Appointment(f"appt-{i}", patient, D + timedelta(days=day), status,
-                           program=program, billed_codes=codes)
-
-    print("\n  ── the scenario this exists to prevent ──")
-    t = AuthTracker(); t.add_authorization(auth())
-    t.record_many(appt(i, ApptStatus.SCHEDULED, day=i * 3) for i in range(20))
-    check("20 scheduled against a 10-visit auth consumes nothing", t.remaining("A1") == 10)
-    check("...and fires no trigger", t._fired == {})
-
-    print("\n  ── occurrence semantics ──")
-    t = AuthTracker(); t.add_authorization(auth())
-    t.record_many(appt(i, ApptStatus.OCCURRED, day=i * 3) for i in range(4))
-    check("4 occurred visits decrement to 6", t.remaining("A1") == 6)
-    t.record(appt(90, ApptStatus.NO_SHOW, day=40))
-    t.record(appt(91, ApptStatus.CANCELLED, day=41))
-    t.record(appt(92, ApptStatus.LATE_CANCEL, day=42))
-    check("no-show, cancel and late-cancel never decrement", t.remaining("A1") == 6)
-    t.record(appt(0, ApptStatus.OCCURRED, day=0))
-    check("replaying the same appointment is idempotent", t.remaining("A1") == 6)
-
-    print("\n  ── billed-code rule ──")
-    t = AuthTracker(); t.add_authorization(auth())
-    t.record(appt(1, codes=("97161",)))
-    check("evaluation-only date of service does not consume", t.remaining("A1") == 10)
-    t.record(appt(2, codes=("97161", "97110")))
-    check("eval plus a treatment code consumes", t.remaining("A1") == 9)
-    t.record(appt(3, codes=()))
-    check("unknown codes fall back to attendance and consume", t.remaining("A1") == 8)
-    check("...and the ledger records the weaker basis",
-          any(e.basis is Basis.ATTENDANCE and e.delta > 0 for e in t.ledger))
-
-    print("\n  ── retroactive correction ──")
-    t = AuthTracker(); t.add_authorization(auth())
-    t.record(appt(1, ApptStatus.OCCURRED))
-    t.record(appt(2, ApptStatus.OCCURRED, day=3))
-    check("two visits counted", t.remaining("A1") == 8)
-    t.record(appt(2, ApptStatus.NO_SHOW, day=3))
-    check("restatus to no-show reverses the entry", t.remaining("A1") == 9)
-    check("reversal is appended, never edited in place", len(t.ledger) == 3)
-    t.record(appt(2, ApptStatus.NO_SHOW, day=3))
-    check("reversal is itself idempotent", t.remaining("A1") == 9 and len(t.ledger) == 3)
-
-    print("\n  ── the trigger ──")
-    t = AuthTracker(); t.add_authorization(auth())
-    fired = t.record_many(appt(i, day=i * 3) for i in range(6))
-    check("no trigger while 4 visits remain", fired == [])
-    fired = t.record(appt(7, day=21))
-    check("trigger fires at exactly 3 remaining", len(fired) == 1 and fired[0].remaining == 3)
-    check("severity follows the hard limit", fired[0].severity is Severity.HARD)
-    check("payload projects an exhaustion date", fired[0].projected_exhaustion is not None)
-    again = t.record(appt(7, day=21))
-    check("no duplicate trigger for the same balance", again == [])
-    dropped = t.record(appt(8, day=24))
-    check("re-fires when the balance drops further", len(dropped) == 1 and dropped[0].remaining == 2)
-
-    print("\n  ── opening balance gate ──")
-    t = AuthTracker(); t.add_authorization(auth(opening_confirmed=False, opening_consumed=8))
-    fired = t.record(appt(1))
-    check("unconfirmed opening balance suppresses the trigger", fired == [])
-    check("...but the balance is still computed", t.remaining("A1") == 1)
-    t.confirm_opening_balance("A1", 8)
-    fired = t.record(appt(2, day=3))
-    check("confirming the backfill lets it fire", len(fired) == 1 and fired[0].remaining == 0)
-
-    print("\n  ── plan cap, counted separately ──")
-    t = AuthTracker(); t.add_authorization(auth(approved_visits=30))
-    t.add_plan_limit(PlanLimit("P1", 2026, limit_visits=6, opening_confirmed=True))
-    fired = t.record_many(appt(i, day=i * 3) for i in range(3))
-    check("far from the auth limit, no auth trigger",
-          all(f.kind is not TriggerKind.AUTH_EXHAUSTING for f in fired))
-    check("but the plan cap fires", any(f.kind is TriggerKind.PLAN_LIMIT for f in fired))
-    t2 = AuthTracker(); t2.add_authorization(auth(approved_visits=30))
-    t2.add_plan_limit(PlanLimit("P1", 2026, limit_visits=30, payer_reported_used=28,
-                                opening_confirmed=True))
-    check("payer-reported usage overrides our own count",
-          t2.plan_remaining("P1", 2026) == 2)
-
-    print("\n  ── VOB thresholds we already collect but never evaluated ──")
-    t = AuthTracker(); t.add_authorization(auth(approved_visits=30, pa_required_after=6,
-                                                mnr_required_after=12))
-    fired = t.record_many(appt(i, day=i * 3) for i in range(6))
-    check("PA-required-after-N fires off the same counter",
-          any(f.kind is TriggerKind.PA_THRESHOLD for f in fired))
-    fired = t.record_many(appt(i, day=i * 3) for i in range(6, 12))
-    check("M&R-required-after-N fires off the same counter",
-          any(f.kind is TriggerKind.MNR_THRESHOLD for f in fired))
-
-    print("\n  ── attribution across concurrent authorizations ──")
-    t = AuthTracker()
-    t.add_authorization(auth(id="A-early", approved_visits=2,
-                             valid_to=D + timedelta(days=30)))
-    t.add_authorization(auth(id="A-late", approved_visits=10,
-                             valid_from=D, valid_to=D + timedelta(days=120)))
-    t.record_many(appt(i, day=i) for i in range(3))
-    check("drains the sooner-expiring auth first", t.remaining("A-early") == 0)
-    check("then spills into the next", t.remaining("A-late") == 9)
-    t2 = AuthTracker()
-    t2.add_authorization(auth(id="A-pt", program="PT", approved_visits=5))
-    t2.add_authorization(auth(id="A-pelvic", program="PELVIC", approved_visits=5))
-    t2.record(appt(1, program="PELVIC"))
-    check("service line is respected", t2.remaining("A-pt") == 5 and t2.remaining("A-pelvic") == 4)
-
-    print("\n  ── visits outside every authorization window ──")
-    t = AuthTracker(); t.add_authorization(auth(valid_to=D + timedelta(days=10)))
-    t.record(appt(1, day=60))
-    check("an uncovered visit is flagged, not silently dropped", len(t.unattributed) == 1)
-    check("...and does not corrupt the balance", t.remaining("A1") == 10)
-
-    print("\n  ── triage: the manual step this replaces ──")
-    t = AuthTracker(); t.add_authorization(auth(approved_visits=10))
-    t.set_documents("P1", ("signed_progress_note", "treatment_plan"))
-    t.record_many(appt(i, day=i * 3) for i in range(2))
-    verdict, _ = t.triage_pending("P1", "PT", D + timedelta(days=10))
-    check("dismisses a premature pending auth", verdict is Triage.DISMISS)
-    t.record_many(appt(i, day=i * 3) for i in range(2, 9))
-    verdict, _ = t.triage_pending("P1", "PT", D + timedelta(days=30))
-    check("submits once the visits are nearly gone", verdict is Triage.SUBMIT)
-    t.set_documents("P1", ("treatment_plan",))
-    verdict, why = t.triage_pending("P1", "PT", D + timedelta(days=30))
-    check("holds when documentation is missing", verdict is Triage.HOLD_FOR_DOCS)
-    check("...and names what is missing", "signed_progress_note" in why)
-
-    print("\n  ── alerts are actionable ──")
-    t = AuthTracker(); t.add_authorization(auth())
-    t.set_documents("P1", ("treatment_plan",))
-    fired = t.record_many(appt(i, day=i * 3) for i in range(7))
-    trig = next(f for f in fired if f.kind is TriggerKind.AUTH_EXHAUSTING)
-    check("trigger reports it is not submittable yet", not trig.ready_to_submit())
-    check("...and lists the blocking document",
-          trig.missing_documents == ("signed_progress_note",))
+    auth = HealthieAuthorization("IA-1", "P1", "AUTH-4471", 10, 0, D, D + timedelta(days=90))
+    evals = [HealthieAppointment(f"e{i}", D + timedelta(days=i), OCCURRED, ("97161",))
+             for i in range(3)]
+    check("default counts an eval visit",
+          VisitAccrual(FakeHealthie(auth, evals)).count_occurred(evals) == 3)
+    check("opt-in excludes eval-only dates of service",
+          VisitAccrual(FakeHealthie(auth, evals), apply_eval_rule=True).count_occurred(evals) == 0)
 
     print()
     if fails:
@@ -571,86 +501,47 @@ def selftest() -> int:
     return 0
 
 
-# ══════════════════════════════════════════════════ DEMOS
+# ══════════════════════════════════════════════════ DEMO
 
 def demo() -> None:
-    D = date(2026, 9, 1)
-    t = AuthTracker()
-    t.add_authorization(Authorization(
-        id="AUTH-4471", patient_id="P-1029", payer="Aetna", program="PT",
-        approved_visits=10, valid_from=D, valid_to=D + timedelta(days=90),
-        opening_confirmed=True, pa_required_after=None, mnr_required_after=None))
-    t.set_documents("P-1029", ("treatment_plan",))
+    client, auth = _fixture(approved=10, occurred=6, scheduled=14)
+    print(f"\n  Authorization {auth.authorization_number} — {auth.number_of_visits} visits approved")
+    print(f"  20 appointments booked, 6 of them occurred.\n")
+    print(f"    Healthie says used ......... {auth.visits_used:>3}"
+          f"   (left {auth.number_of_visits - auth.visits_used:>3})   ← scheduled + occurred")
+    corr, alert = VisitAccrual(client).sync("P1")
+    print(f"    corrected to ............... {corr.corrected_visits_used:>3}"
+          f"   (left {corr.corrected_visits_left:>3})   ← occurred only")
+    print(f"    still booked, not delivered  {corr.scheduled_not_occurred:>3}")
+    print(f"\n  {corr}")
+    print(f"  alert: {alert.message if alert else 'none — 4 visits left'}")
+    print(f"\n  Same patient, at booking time: over-booked by "
+          f"{VisitAccrual(client).overbooked_by('P1')} visits.\n")
 
-    print("\n  Ten visits authorized. Twenty booked. Watch the balance.\n")
-    booked = [Appointment(f"a{i}", "P-1029", D + timedelta(days=i * 3),
-                          ApptStatus.SCHEDULED, billed_codes=("97110",)) for i in range(20)]
-    t.record_many(booked)
-    print(f"    after booking all 20:  remaining = {t.remaining('AUTH-4471')}"
-          "   ← scheduling consumes nothing\n")
 
-    print("  Now they start happening.\n")
-    for i, a in enumerate(booked):
-        occurred = Appointment(a.id, a.patient_id, a.on, ApptStatus.OCCURRED,
-                               billed_codes=("97161",) if i == 0 else ("97110",))
-        for trig in t.record(occurred):
-            flag = "READY" if trig.ready_to_submit() else "BLOCKED"
-            print(f"    ▲ {trig.kind.value:<22} {trig.remaining} left   "
-                  f"exhausts ~{trig.projected_exhaustion}   [{flag}]")
-            if trig.missing_documents:
-                print(f"      needs: {', '.join(trig.missing_documents)}")
-        if i in (0, 6, 9, 12):
-            note = "  (evaluation only — does not consume)" if i == 0 else ""
-            print(f"    visit {i + 1:>2} occurred  →  remaining "
-                  f"{t.remaining('AUTH-4471'):>3}{note}")
-        if t.remaining("AUTH-4471") <= 0 and i >= 12:
-            print(f"\n    visit {i + 1} was delivered with the allotment exhausted."
-                  "\n    Without the trigger above, nobody would know until the claim denied.")
-            break
+def queries() -> None:
+    for name, doc in (("authorization", GQL_AUTHORIZATION),
+                      ("appointments", GQL_OCCURRED_APPOINTMENTS),
+                      ("writeback", GQL_UPDATE_AUTHORIZATION),
+                      ("webhook", GQL_REGISTER_WEBHOOK)):
+        print(f"\n{'─' * 72}\n{name}\n{'─' * 72}{doc}")
+    print(f"\n{'─' * 72}\nheaders\n{'─' * 72}")
+    for k, v in HEADERS.items():
+        print(f"  {k}: {v}")
+    print(f"\n  endpoint: {ENDPOINT}\n  sandbox:  {SANDBOX_ENDPOINT}")
+    print(f"\n  webhook events to register:")
+    for e in WEBHOOK_EVENTS:
+        print(f"    {e}")
     print()
-    print(t.balance_report("AUTH-4471", D + timedelta(days=40)))
-    print()
-
-
-def triage_demo() -> None:
-    D = date(2026, 9, 1)
-    t = AuthTracker()
-    t.add_authorization(Authorization(
-        id="AUTH-8802", patient_id="P-77", payer="Optum", program="PT",
-        approved_visits=12, valid_from=D, valid_to=D + timedelta(days=90),
-        opening_confirmed=True))
-    t.set_documents("P-77", ("signed_progress_note", "treatment_plan"))
-    print("\n  A pending authorization is raised every time a patient books beyond")
-    print("  the current window. Most of them should never be submitted.\n")
-    for used, day, label in ((2, 10, "early in the episode"),
-                             (7, 30, "mid-episode"),
-                             (10, 60, "nearly exhausted")):
-        t2 = AuthTracker()
-        t2.add_authorization(t.auths["AUTH-8802"].__class__(**t.auths["AUTH-8802"].__dict__))
-        t2.set_documents("P-77", ("signed_progress_note", "treatment_plan"))
-        t2.record_many(Appointment(f"x{i}", "P-77", D + timedelta(days=i), ApptStatus.OCCURRED,
-                                   billed_codes=("97110",)) for i in range(used))
-        verdict, why = t2.triage_pending("P-77", "PT", D + timedelta(days=day))
-        print(f"    {label:<22} {used:>2} used, {t2.remaining('AUTH-8802'):>2} left"
-              f"   →  {verdict.value.upper()}")
-        print(f"      {why}")
-    t.set_documents("P-77", ())
-    verdict, why = t.triage_pending("P-77", "PT", D + timedelta(days=60))
-    print(f"\n    documentation missing        →  {verdict.value.upper()}")
-    print(f"      {why}\n")
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description=__doc__.split("\n")[1],
-                                formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("cmd", choices=("selftest", "demo", "triage"), nargs="?", default="selftest")
+    p = argparse.ArgumentParser(description=__doc__.split("\n")[1])
+    p.add_argument("cmd", choices=("selftest", "demo", "queries"), nargs="?", default="selftest")
     a = p.parse_args()
     if a.cmd == "selftest":
         sys.exit(selftest())
-    if a.cmd == "demo":
-        demo()
-    else:
-        triage_demo()
+    demo() if a.cmd == "demo" else queries()
 
 
 if __name__ == "__main__":
