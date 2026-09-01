@@ -2,7 +2,7 @@
 
 **jpstack turns your terminal into a full operating system for running a startup as a solo founder.**
 
-14 opinionated workflow skills that handle the business side — daily briefings, PMF intelligence, sprint planning, sales coaching, conference pipelines, investor reports, and content creation — all as slash commands.
+15 opinionated workflow skills that handle the business side — daily briefings, PMF intelligence, sprint planning, sales coaching, conference pipelines, investor reports, and content creation — all as slash commands.
 
 ### Without jpstack
 
@@ -27,6 +27,7 @@
 | `/post-conference-insights` | Thought leader | Post-event: branded 1-2 page PDF one-pager with stat cards and action items. Anti-AI detection pass included. |
 | `/post-conference-fup` | Pipeline builder | Post-event: segments contacts HOT/WARM/COOL/COLD, builds tailored sequences, creates deals, tracks conference ROI. |
 | `/prior-auth-review` | Product demo | Automates payer PA review using NPI, ICD-10, CMS Coverage connectors. 30-min review in under 5 minutes. |
+| `/eligibility-check` | Coverage verifier | Real-time insurance eligibility and benefits via Stedi (270/271). Payer ID lookup, copay/deductible/OOP in plain English, CSV batch runs. |
 | `/x-healthcare-posts` | Content creator | X posts and threads for Healthcare AI audiences. Operator voice. Optimized for Heavy Ranker algorithm. |
 | `/linkedin-carousel-builder` | Visual content | Branded carousel PDFs (1080x1350, 4:5) with safe zones, mobile typography, Playwright export. |
 | `/fact-check` | QA engineer | Verifies numerical claims before publishing. Writes verification scripts, classifies claims, produces audit reports. |
@@ -169,6 +170,7 @@ These skills pull from your existing tools. The more connectors you have, the mo
 | **Apollo.io** | conference-prep, post-conference-fup, pmf-pulse, weekly-retro |
 | **Ahrefs** | pmf-pulse competitor benchmarking |
 | **ICD-10 / NPI / CMS** | prior-auth-review product demo |
+| **Stedi** | eligibility-check — registered in `.mcp.json`, needs `STEDI_API_KEY` |
 
 Skills degrade gracefully. If a connector isn't available, the skill uses what it can and tells you what's missing.
 
@@ -176,6 +178,16 @@ Skills degrade gracefully. If a connector isn't available, the skill uses what i
 
 - Python 3.10+ with `fpdf2` — for post-conference PDF generation
 - Playwright — for LinkedIn carousel export
+- `STEDI_API_KEY` — for `/eligibility-check`. Copy `.env.example` to `.env` and fill it in,
+  or export it in your shell. Start with a Stedi **test** key: it returns realistic mock
+  benefits at no cost and never sends patient data to a payer. Live keys send real 270s and
+  bill per transaction.
+
+### PHI
+
+`/eligibility-check` touches real patient data when run with a live key. Saved responses
+and batch CSVs go to `outputs/`, which is gitignored — keep them there. Never commit an
+eligibility response, and use synthetic patients for demos and screenshots.
 
 ## Upgrading
 
@@ -186,7 +198,7 @@ cd ~/.claude/skills/jpstack && git pull && ./setup
 ## Uninstalling
 
 ```bash
-for s in chief-of-staff pmf-pulse product-insights weekly-retro investor-report pricing-coach conference-prep post-conference-insights post-conference-fup prior-auth-review x-healthcare-posts linkedin-carousel-builder fact-check solum-health-brand; do rm -f ~/.claude/skills/$s; done && rm -rf ~/.claude/skills/jpstack
+for s in chief-of-staff pmf-pulse product-insights weekly-retro investor-report pricing-coach conference-prep post-conference-insights post-conference-fup prior-auth-review eligibility-check x-healthcare-posts linkedin-carousel-builder fact-check solum-health-brand; do rm -f ~/.claude/skills/$s; done && rm -rf ~/.claude/skills/jpstack
 ```
 
 ## How I use these skills

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "stedi-healthcare": {
+      "type": "http",
+      "url": "https://mcp.us.stedi.com/2025-07-11/mcp",
+      "headers": {
+        "Authorization": "${STEDI_API_KEY}"
+      }
+    }
+  }
+}

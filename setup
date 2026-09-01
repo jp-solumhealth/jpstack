@@ -13,6 +13,7 @@ SKILLS=(
   "post-conference-insights"
   "pricing-coach"
   "prior-auth-review"
+  "eligibility-check"
   "investor-report"
   "solum-health-brand"
   "x-healthcare-posts"
@@ -24,7 +25,7 @@ SKILLS=(
   "weekly-retro"
 )
 
-echo "jpstack — installing 14 skills to $SKILLS_DIR"
+echo "jpstack — installing ${#SKILLS[@]} skills to $SKILLS_DIR"
 echo ""
 
 for skill in "${SKILLS[@]}"; do
@@ -55,5 +56,5 @@ echo ""
 echo '  ## jpstack Skills'
 echo '  Custom skills installed from jpstack. Available slash commands:'
 echo '  /chief-of-staff, /pricing-coach, /conference-prep, /post-conference-insights,'
-echo '  /investor-report, /prior-auth-review, /x-healthcare-posts,'
+echo '  /investor-report, /prior-auth-review, /eligibility-check, /x-healthcare-posts,'
 echo '  /linkedin-carousel-builder, /fact-check, /solum-health-brand'

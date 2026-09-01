@@ -49,3 +49,7 @@ venv/
 # Temporary files
 tmp/
 *.tmp
+
+# Skill outputs — eligibility responses and batch results contain PHI
+outputs/
+waypoints/
