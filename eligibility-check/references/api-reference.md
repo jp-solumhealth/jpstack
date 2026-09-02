@@ -20,7 +20,12 @@ Authorization: <STEDI_API_KEY>
 Content-Type: application/json
 ```
 
-Base URL: `https://healthcare.us.stedi.com/2024-04-01`
+There are **two hosts**, and mixing them up is the most common source of a misleading 404:
+
+| Host | Serves |
+|------|--------|
+| `https://healthcare.us.stedi.com/2024-04-01` | Real-time eligibility, payer search, payer retrieve |
+| `https://manager.us.stedi.com/2024-04-01` | Everything about batches, under `/eligibility-manager/` |
 
 ---
 
@@ -126,12 +131,30 @@ restrict to payers supporting that transaction. Returns matching payer records w
 
 ---
 
+## Batch Eligibility
+
+Host: `https://manager.us.stedi.com/2024-04-01`. Up to 10,000 checks per batch, as many
+batches as you need. Batches submitted by CSV upload in the Stedi portal are visible through
+the same endpoints.
+
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /eligibility-manager/batch-eligibility` | Submit a batch. Returns `batchId` synchronously; the checks run async. |
+| `GET /eligibility-manager/batch/{batchId}` | Batch-level status: overall state, completed count, error count. |
+| `GET /eligibility-manager/batch/{batchId}/items` | Per-check status for **every** check in the batch, whatever its state — `COMPLETED`, `queued`, `started`, `failed`. This is the endpoint for "why is this batch not done". |
+| `GET /eligibility-manager/polling/batch-eligibility?batchId={batchId}` | The 271 responses, **completed checks only**. |
+
+The distinction that matters when troubleshooting: polling returns only finished checks, so a
+batch that looks empty there may be entirely queued or failed. `/items` shows you which.
+
+A 404 from these endpoints means the batch id is not visible to the key you are using —
+batch ids are scoped per account and per test/live mode — or that the request went to the
+`healthcare` host by mistake.
+
 ## Not wrapped by this skill
 
 Available on the same API and worth knowing about:
 
-- **Batch Eligibility Check** — asynchronous bulk 270s, for rosters large enough that
-  per-row real-time calls are the wrong tool.
 - **Claim Status (276/277)** — where a submitted claim stands with the payer.
 - **Professional Claims (837P)** — claim submission.
 - **Insurance Discovery** — find coverage when the patient cannot produce a card.

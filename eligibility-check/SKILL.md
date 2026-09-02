@@ -106,16 +106,42 @@ python3 eligibility-check/scripts/stedi.py check \
 - Exit code is `0` on a clean response, `1` when the payer returned AAA errors, `2` on a
   local or transport failure.
 
-### Batch a roster
+### Inspect a batch you already submitted
+
+For a batch submitted to Stedi's async Batch Eligibility API or uploaded as CSV in the
+Stedi portal, `batch` takes the batch ID and reports the batch status, a tally of per-check
+states, and every check that did not complete with its reason:
 
 ```bash
-python3 eligibility-check/scripts/stedi.py batch roster.csv \
-  --npi 1999999984 --org "Solum Health" --out outputs/eligibility-batch.csv
+python3 eligibility-check/scripts/stedi.py batch 01a00614-0d77-76f2-9797-ef935558b834
+```
+
+Add `--results` to also poll for the completed 271s, and `--save-dir outputs/batch` to write
+each one to disk instead of printing the first few.
+
+**Batch endpoints are on a different host** — `manager.us.stedi.com`, path prefix
+`/2024-04-01/eligibility-manager/` — not the `healthcare.us.stedi.com` host that serves
+real-time checks. Sending a batch request to the healthcare host returns a 404 that reads
+like "batch not found" but means "wrong host". The script routes each command correctly; if
+you are debugging with curl, check the host first.
+
+A genuine 404 from the manager host usually means the batch belongs to a different key:
+batch IDs are scoped to the account and to test-vs-live mode. A batch created in the portal
+under your live account is invisible to a test key.
+
+### Run a roster locally
+
+`roster` is the alternative when you have a CSV and no batch: one real-time check per row.
+
+```bash
+python3 eligibility-check/scripts/stedi.py roster patients.csv \
+  --npi 1999999984 --org "Solum Health" --out outputs/eligibility-roster.csv
 ```
 
 CSV columns: `firstName,lastName,dateOfBirth,memberId,payerId` plus optional `npi`,
-`organizationName`, `serviceTypeCode`. Each row is one real-time check — on a live key that
-is one billed transaction per row, so confirm the row count with the user before running.
+`organizationName`, `serviceTypeCode`. Each row is one billed transaction on a live key, so
+confirm the row count with the user before running. Past a few hundred rows, submit a real
+batch instead and inspect it with `batch`.
 
 ### Report the result
 

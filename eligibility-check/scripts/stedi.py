@@ -12,7 +12,12 @@ Usage:
       --first Jane --last Doe --dob 19000101 --member-id AETNA12345 \
       --service-type 30 --save outputs/jane-doe.json
   stedi.py check --input request.json
-  stedi.py batch patients.csv --payer-column payerId --out outputs/batch.csv
+  stedi.py batch 01a00614-0d77-76f2-9797-ef935558b834 --results --save-dir outputs/batch
+  stedi.py roster patients.csv --payer-column payerId --out outputs/roster.csv
+
+`batch` inspects a batch submitted to Stedi's async Batch Eligibility API or
+uploaded as CSV in the portal. `roster` is the local alternative: one real-time
+check per CSV row, no batch involved.
 
 Every command exits non-zero on transport or API errors, and on eligibility
 responses that carry AAA rejection errors, so it can be used in scripts.
@@ -31,7 +36,11 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+# Real-time checks and payer lookups live on the healthcare host; everything about
+# batches lives on the eligibility-manager host. Sending a batch request to the
+# healthcare host is a 404, which reads like "batch not found" — it is not.
 BASE_URL = os.environ.get("STEDI_BASE_URL", "https://healthcare.us.stedi.com")
+MANAGER_URL = os.environ.get("STEDI_MANAGER_URL", "https://manager.us.stedi.com")
 API_VERSION = "2024-04-01"
 TIMEOUT = 60
 
@@ -113,8 +122,14 @@ def api_key() -> str:
 # ---------------------------------------------------------------------- transport
 
 
-def request(method: str, path: str, params: dict | None = None, body: dict | None = None) -> dict:
-    url = f"{BASE_URL}/{API_VERSION}/{path.lstrip('/')}"
+def request(
+    method: str,
+    path: str,
+    params: dict | None = None,
+    body: dict | None = None,
+    base: str | None = None,
+) -> dict:
+    url = f"{base or BASE_URL}/{API_VERSION}/{path.lstrip('/')}"
     if params:
         url += "?" + urllib.parse.urlencode({k: v for k, v in params.items() if v is not None})
 
@@ -139,6 +154,11 @@ def request(method: str, path: str, params: dict | None = None, body: dict | Non
         hint = ""
         if exc.code in (401, 403):
             hint = " (check STEDI_API_KEY, and that the key's account has this API enabled)"
+        elif exc.code == 404:
+            hint = (
+                " (a batch or check id is only visible to the key that created it —"
+                " test and live keys see separate data, as do separate Stedi accounts)"
+            )
         raise StediError(f"HTTP {exc.code} from {method} {path}{hint}: {detail}") from exc
     except urllib.error.URLError as exc:
         raise StediError(f"Could not reach {url}: {exc.reason}") from exc
@@ -407,7 +427,104 @@ def cmd_check(args: argparse.Namespace) -> int:
     return 1 if collect_errors(response) else 0
 
 
+def pick(source: dict, *keys: str, default: str = "") -> str:
+    """First present, non-empty value among `keys`. Shields against field renames."""
+    for key in keys:
+        value = source.get(key)
+        if value not in (None, "", [], {}):
+            return value if isinstance(value, str) else json.dumps(value)
+    return default
+
+
+def paged(path: str, params: dict | None = None, max_pages: int = 50) -> list[dict]:
+    """Collect every page of a list endpoint, following whichever cursor key it uses."""
+    items: list[dict] = []
+    params = dict(params or {})
+    for _ in range(max_pages):
+        page = request("GET", path, params=params, base=MANAGER_URL)
+        items.extend(page.get("items") or page.get("checks") or page.get("results") or [])
+        cursor = page.get("nextPageToken") or page.get("nextCursor") or page.get("pageToken")
+        if not cursor:
+            return items
+        params["pageToken"] = cursor
+    print(f"Warning: stopped after {max_pages} pages; results may be truncated", file=sys.stderr)
+    return items
+
+
 def cmd_batch(args: argparse.Namespace) -> int:
+    """Inspect a batch submitted to the async Batch Eligibility API or via portal CSV."""
+    batch_id = urllib.parse.quote(args.batch_id)
+
+    status = request("GET", f"eligibility-manager/batch/{batch_id}", base=MANAGER_URL)
+    print(f"Batch {args.batch_id}")
+    print(f"  status     : {pick(status, 'status', 'batchStatus', default='unknown')}")
+    for label, keys in (
+        ("submitted ", ("createdAt", "submittedAt")),
+        ("updated   ", ("updatedAt", "completedAt")),
+        ("total     ", ("totalCount", "total", "checkCount")),
+        ("completed ", ("completedCount", "completed")),
+        ("errored   ", ("errorCount", "failedCount", "errors")),
+        ("name      ", ("name", "filename", "description")),
+    ):
+        value = pick(status, *keys)
+        if value != "":
+            print(f"  {label}: {value}")
+
+    items = paged(f"eligibility-manager/batch/{batch_id}/items", {"pageSize": args.page_size})
+    if not items:
+        print("\nNo per-check items returned. The batch may still be queued, or the id may "
+              "belong to another account.")
+        return 1
+
+    tally: dict[str, int] = {}
+    failures: list[tuple[str, str, str]] = []
+    for item in items:
+        state = pick(item, "status", "state", default="unknown")
+        tally[state] = tally.get(state, 0) + 1
+        if state.upper() not in ("COMPLETED", "SUCCESS", "SUCCEEDED"):
+            subscriber = item.get("subscriber") or item.get("member") or {}
+            who = " ".join(
+                x for x in (subscriber.get("firstName", ""), subscriber.get("lastName", "")) if x
+            ) or pick(subscriber, "memberId", default="?")
+            reason = pick(item, "error", "errorMessage", "failureReason", "message")
+            if not reason:
+                nested = collect_errors(item)
+                reason = "; ".join(nested) if nested else ""
+            failures.append((pick(item, "eligibilityCheckId", "checkId", "id", default="?"), who, reason))
+
+    print(f"\nChecks ({len(items)}):")
+    for state, count in sorted(tally.items(), key=lambda kv: -kv[1]):
+        print(f"  {count:>5}  {state}")
+
+    if failures:
+        print(f"\nNot completed ({len(failures)}):")
+        for check_id, who, reason in failures[: args.max_failures]:
+            print(f"  {check_id}  {who}  {reason}"[:200])
+        if len(failures) > args.max_failures:
+            print(f"  ... {len(failures) - args.max_failures} more (raise --max-failures)")
+
+    if args.results:
+        completed = paged(
+            "eligibility-manager/polling/batch-eligibility", {"batchId": args.batch_id}
+        )
+        print(f"\nCompleted results returned by polling: {len(completed)}")
+        for index, result in enumerate(completed, start=1):
+            response = result.get("response") or result.get("eligibilityResponse") or result
+            if args.save_dir:
+                save_json(f"{args.save_dir}/check-{index}.json", result)
+            elif index <= 3:
+                print(f"\n--- result {index} ---")
+                print(summarize(response))
+        if args.save_dir:
+            print(f"Wrote {len(completed)} response files to {args.save_dir}/")
+
+    if args.save:
+        save_json(args.save, {"status": status, "items": items})
+
+    return 1 if failures else 0
+
+
+def cmd_roster(args: argparse.Namespace) -> int:
     """Run one real-time check per CSV row. Columns map to the check flags by name."""
     rows = list(csv.DictReader(pathlib.Path(args.csv).open(encoding="utf-8-sig")))
     if not rows:
@@ -523,16 +640,25 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--dry-run", action="store_true", help="print the request body and exit")
     p.set_defaults(func=cmd_check)
 
-    p = sub.add_parser("batch", help="run one check per CSV row and write a summary CSV")
+    p = sub.add_parser("batch", help="inspect a Stedi batch by id: status, per-check states, failures")
+    p.add_argument("batch_id")
+    p.add_argument("--results", action="store_true", help="also poll for completed 271 responses")
+    p.add_argument("--save-dir", help="write each polled response JSON into this directory")
+    p.add_argument("--save", help="write the status + items JSON here")
+    p.add_argument("--page-size", type=int, default=100)
+    p.add_argument("--max-failures", type=int, default=25, help="how many failing checks to print")
+    p.set_defaults(func=cmd_batch)
+
+    p = sub.add_parser("roster", help="run one real-time check per CSV row and write a summary CSV")
     p.add_argument("csv", help="columns: firstName,lastName,dateOfBirth,memberId,payerId[,npi,organizationName,serviceTypeCode]")
-    p.add_argument("--out", default="outputs/eligibility-batch.csv")
+    p.add_argument("--out", default="outputs/eligibility-roster.csv")
     p.add_argument("--payer-column", default="payerId")
     p.add_argument("--payer", help="fallback payer id for rows with an empty payer column")
     p.add_argument("--npi", help="fallback provider NPI")
     p.add_argument("--org", help="fallback provider organization name")
     p.add_argument("--service-type-default", default="30")
     p.add_argument("--save-dir", help="also write each raw response JSON into this directory")
-    p.set_defaults(func=cmd_batch)
+    p.set_defaults(func=cmd_roster)
 
     return ap
 
