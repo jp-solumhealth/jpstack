@@ -31,6 +31,7 @@
 | `/linkedin-carousel-builder` | Visual content | Branded carousel PDFs (1080x1350, 4:5) with safe zones, mobile typography, Playwright export. |
 | `/fact-check` | QA engineer | Verifies numerical claims before publishing. Writes verification scripts, classifies claims, produces audit reports. |
 | `/solum-health-brand` | Brand guardian | Auto-activates on any content. Full design system: colors, DM Sans, gradients, spacing, CSS starter. |
+| `/uscis-petition-review` | Petition auditor | Accuracy and consistency audit of an EB-1A or O-1 petition drafted by counsel. Maps evidence to the regulatory criteria, cross-checks every number against its own exhibits, simulates the adjudicator, ranks findings by leverage. Never drafts, never invents a fact. |
 
 ## Demo: one conference, four skills
 
