@@ -1,6 +1,6 @@
 # jpstack
 
-14 Claude Code skills for running a healthcare AI startup as a solo CEO.
+15 Claude Code skills for running a healthcare AI startup as a solo CEO.
 Pairs with [gstack](https://github.com/garrytan/gstack) for engineering execution.
 
 ## Available Slash Commands
@@ -17,6 +17,7 @@ Pairs with [gstack](https://github.com/garrytan/gstack) for engineering executio
 ### Sales & Revenue
 | Command | What It Does |
 |---------|-------------|
+| `/tax-deductions` | Deduction database: log receipts, track 1099 duties, export for the CPA |
 | `/pricing-coach` | Weekly sales call pricing analysis and coaching |
 | `/conference-prep` | Pre-event: lead enrichment + branded agenda |
 | `/post-conference-insights` | Post-event: branded PDF one-pager |

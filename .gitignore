@@ -43,6 +43,13 @@ venv/
 *.swo
 *~
 
+# Tax deduction database — real financial records and receipts, never committed
+*.db
+*.sqlite
+*.sqlite3
+receipts/
+tax-deductions/**/cpa-*/
+
 # Logs
 *.log
 

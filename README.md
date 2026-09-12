@@ -2,7 +2,7 @@
 
 **jpstack turns your terminal into a full operating system for running a startup as a solo founder.**
 
-14 opinionated workflow skills that handle the business side — daily briefings, PMF intelligence, sprint planning, sales coaching, conference pipelines, investor reports, and content creation — all as slash commands.
+15 opinionated workflow skills that handle the business side — daily briefings, PMF intelligence, sprint planning, sales coaching, conference pipelines, investor reports, deduction bookkeeping, and content creation — all as slash commands.
 
 ### Without jpstack
 
@@ -29,6 +29,7 @@
 | `/prior-auth-review` | Product demo | Automates payer PA review using NPI, ICD-10, CMS Coverage connectors. 30-min review in under 5 minutes. |
 | `/x-healthcare-posts` | Content creator | X posts and threads for Healthcare AI audiences. Operator voice. Optimized for Heavy Ranker algorithm. |
 | `/linkedin-carousel-builder` | Visual content | Branded carousel PDFs (1080x1350, 4:5) with safe zones, mobile typography, Playwright export. |
+| `/tax-deductions` | Bookkeeper | SQLite deduction database. Logs a receipt in one command with its evidence hashed, computes what actually deducts, and warns you when paying a contractor by Zelle just made you the 1099 filer. |
 | `/fact-check` | QA engineer | Verifies numerical claims before publishing. Writes verification scripts, classifies claims, produces audit reports. |
 | `/solum-health-brand` | Brand guardian | Auto-activates on any content. Full design system: colors, DM Sans, gradients, spacing, CSS starter. |
 
@@ -176,6 +177,9 @@ Skills degrade gracefully. If a connector isn't available, the skill uses what i
 
 - Python 3.10+ with `fpdf2` — for post-conference PDF generation
 - Playwright — for LinkedIn carousel export
+- `/tax-deductions` needs nothing beyond Python 3.10+ — stdlib only, SQLite, no services.
+  Its database defaults to `~/.claude/data/tax-deductions.db` (override with `$TAXDB`)
+  and never leaves your machine.
 
 ## Upgrading
 
@@ -186,7 +190,7 @@ cd ~/.claude/skills/jpstack && git pull && ./setup
 ## Uninstalling
 
 ```bash
-for s in chief-of-staff pmf-pulse product-insights weekly-retro investor-report pricing-coach conference-prep post-conference-insights post-conference-fup prior-auth-review x-healthcare-posts linkedin-carousel-builder fact-check solum-health-brand; do rm -f ~/.claude/skills/$s; done && rm -rf ~/.claude/skills/jpstack
+for s in chief-of-staff pmf-pulse product-insights weekly-retro investor-report pricing-coach conference-prep post-conference-insights post-conference-fup prior-auth-review x-healthcare-posts linkedin-carousel-builder fact-check solum-health-brand tax-deductions; do rm -f ~/.claude/skills/$s; done && rm -rf ~/.claude/skills/jpstack
 ```
 
 ## How I use these skills
