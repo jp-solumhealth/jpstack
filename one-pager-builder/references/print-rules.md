@@ -51,22 +51,48 @@ Note the `height: 11in` (not `min-height`) plus `overflow: hidden`. This is what
 
 If you exceed, cut copy before you cut design.
 
-## Chrome headless command
+## Build command
+
+Use the build script with the filled HTML file (absolute or relative paths work):
 
 ```bash
-cd <output-dir> && "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
-  --headless \
-  --disable-gpu \
-  --no-pdf-header-footer \
-  --print-to-pdf=<name>.pdf \
-  "file://$(pwd)/<name>.html"
+bash one-pager-builder/scripts/build.sh "<output-dir>/<name>.html"
 ```
+
+Requires Bash, Python 3 (standard library only, for local file URL encoding), and
+Chrome or Chromium. The script detects the standard macOS Chrome path and common
+Linux executable names. Set `CHROME_BIN` to select another executable:
+
+```bash
+CHROME_BIN="/path/to/chrome" bash one-pager-builder/scripts/build.sh "<name>.html"
+```
+
+The script renders to a temporary file beside the output, checks Chrome's exit
+status and the fresh PDF's nonempty content and `%PDF-` signature, then replaces
+`<name>.pdf`. A failed render leaves the previous PDF untouched and exits nonzero.
+These checks do not validate layout or guarantee that all content is visible.
+
+Page counting uses `pdfinfo` if available, then macOS `mdls`. If neither produces
+a page count, the build warns that manual verification is required. A multi-page
+PDF also produces a warning. Optional gstack screenshot failures are warnings;
+`BROWSE_BIN` can override the default gstack executable path.
 
 ## Verification
 
+Confirm the build reports `Pages: 1`. If the page count is unavailable, open the
+PDF and verify one page manually. Optional standalone page-count commands:
+
 ```bash
-# Must return 1
-mdls -name kMDItemNumberOfPages <file>.pdf
+pdfinfo "<file>.pdf"  # Look for Pages: 1 (requires Poppler).
+# Or on macOS:
+mdls -name kMDItemNumberOfPages "<file>.pdf"
+```
+
+Inspect the optional screenshot for alignment, logo size, card heights, and
+clipped content. If no screenshot was generated, inspect the PDF visually.
+One page alone does not establish that content fits.
+
+```bash
 
 # Screenshot for visual check
 B=~/.claude/skills/gstack/browse/dist/browse

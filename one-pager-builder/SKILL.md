@@ -90,12 +90,12 @@ Follow `references/copy-rules.md`:
 2. Fill placeholders with target-specific copy + numbers.
 3. Copy client logos from `references/client-logos.md` URLs into `<target>/client-logos/`.
 4. Copy Solum wordmark SVG from `~/Documents/Claude/landing-page/logo-solumhealth-dark.svg` to the output folder.
-5. Run `scripts/build.sh <output-folder>` to generate PDF and screenshot.
+5. Run `bash scripts/build.sh <output-folder>/<name>.html` to generate the PDF and an optional screenshot.
 
 ### Step 5 — Verify
 
-- `mdls -name kMDItemNumberOfPages <file>.pdf` must return `1`.
-- Read the screenshot and confirm: logo prominent, cards aligned, trust strip visible, totals band clean, JP contact readable.
+- Confirm the build reports `Pages: 1`. If page counting is unavailable, open the PDF and verify it has one page. You can also use `pdfinfo <file>.pdf` or macOS `mdls -name kMDItemNumberOfPages <file>.pdf`.
+- Read the screenshot (or open the PDF if the optional screenshot was unavailable) and confirm: logo prominent, cards aligned, trust strip visible, totals band clean, JP contact readable.
 - If content overflows, tighten copy (cards to 1 sentence), not design.
 
 ## Output structure
