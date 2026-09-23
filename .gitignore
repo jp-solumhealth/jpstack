@@ -30,8 +30,12 @@ __pycache__/
 venv/
 .venv/
 
-# Claude Code
-.claude/
+# Claude Code — the data guard travels with the repo; everything else stays local
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
+.claude/settings.local.json
+.claude/private-terms.txt
 
 # Vercel
 .vercel
