@@ -22,6 +22,7 @@ Pairs with [gstack](https://github.com/garrytan/gstack) for engineering executio
 | `/post-conference-insights` | Post-event: branded PDF one-pager |
 | `/post-conference-fup` | Post-event: segment contacts, build sequences, track ROI |
 | `/prior-auth-review` | Prior auth review demo using NPI/ICD-10/CMS MCP |
+| `/google-ads` | 10-stage Google Ads loop: research, keywords, structure, copy, audits, scaling |
 
 ### Content & Brand
 | Command | What It Does |

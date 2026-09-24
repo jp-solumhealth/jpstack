@@ -28,6 +28,7 @@
 | `/post-conference-fup` | Pipeline builder | Post-event: segments contacts HOT/WARM/COOL/COLD, builds tailored sequences, creates deals, tracks conference ROI. |
 | `/prior-auth-review` | Product demo | Automates payer PA review using NPI, ICD-10, CMS Coverage connectors. 30-min review in under 5 minutes. |
 | `/x-healthcare-posts` | Content creator | X posts and threads for Healthcare AI audiences. Operator voice. Optimized for Heavy Ranker algorithm. |
+| `/google-ads` | Paid search operator | 10-stage Google Ads loop: brand brain, customer language, competitor angles, keywords, account structure, RSA copy, conversion tracking, landing briefs, daily audit, weekly scaling plan. Read-only by default. |
 | `/linkedin-carousel-builder` | Visual content | Branded carousel PDFs (1080x1350, 4:5) with safe zones, mobile typography, Playwright export. |
 | `/fact-check` | QA engineer | Verifies numerical claims before publishing. Writes verification scripts, classifies claims, produces audit reports. |
 | `/solum-health-brand` | Brand guardian | Auto-activates on any content. Full design system: colors, DM Sans, gradients, spacing, CSS starter. |
@@ -186,7 +187,7 @@ cd ~/.claude/skills/jpstack && git pull && ./setup
 ## Uninstalling
 
 ```bash
-for s in chief-of-staff pmf-pulse product-insights weekly-retro investor-report pricing-coach conference-prep post-conference-insights post-conference-fup prior-auth-review x-healthcare-posts linkedin-carousel-builder fact-check solum-health-brand; do rm -f ~/.claude/skills/$s; done && rm -rf ~/.claude/skills/jpstack
+for s in chief-of-staff pmf-pulse product-insights weekly-retro investor-report pricing-coach conference-prep post-conference-insights post-conference-fup prior-auth-review x-healthcare-posts linkedin-carousel-builder fact-check solum-health-brand google-ads; do rm -f ~/.claude/skills/$s; done && rm -rf ~/.claude/skills/jpstack
 ```
 
 ## How I use these skills
