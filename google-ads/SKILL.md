@@ -36,11 +36,11 @@ a file that the next stage reads, so the loop compounds instead of restarting ev
 
 ## Workspace
 
-All stage outputs live in `./google-ads/` in the current working directory (create it on first
+All stage outputs live in `./google-ads-workspace/` in the current working directory (create it on first
 run). Each stage reads the files before it.
 
 ```
-google-ads/
+google-ads-workspace/
   00-brain.md              # Stage 0: brand profile + open questions
   01-language-bank.md      # Stage 1: quotes / pain / outcome / stage / angle
   02-competitor-map.md     # Stage 2: competitor table + validated + white-space angles
@@ -269,7 +269,7 @@ Stage tone:
 ```bash
 python3 - <<'EOF'
 import re, sys
-text = open("google-ads/05-rsa/<ad-group>.md").read()
+text = open("google-ads-workspace/05-rsa/<ad-group>.md").read()
 for kind, limit in (("H", 30), ("D", 90)):
     for line in re.findall(rf"^{kind}\d+:\s*(.+)$", text, re.M):
         n = len(line.strip())
@@ -414,7 +414,7 @@ End every stage with:
 
 ```
 STAGE {n} COMPLETE — {name}
-Saved: google-ads/{file}
+Saved: google-ads-workspace/{file}
 Key findings: {3 bullets}
 Needs your input: {questions, or "none"}
 Next: /google-ads {next-stage}
