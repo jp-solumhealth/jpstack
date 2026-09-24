@@ -43,6 +43,24 @@ PATH="$HOME/.bun/bin:$PATH" $B perf                           # Performance timi
 PATH="$HOME/.bun/bin:$PATH" $B screenshot /tmp/site-review.png # Visual capture
 ```
 
+### Phase 0.5: Search Data from OpenSEO (optional, if connected)
+
+The browse checks below see one page as it renders. If OpenSEO MCP is connected (see
+`/seo`), add site-wide search data so findings are ranked by real traffic impact:
+
+- `whoami` → confirm the connection and credits. If not connected, skip this phase and
+  say "search data not included" in the report header.
+- `run_site_audit` on the domain (Lighthouse off), then `get_audit_status` →
+  `get_audit_issues` / `get_audit_pages`. The crawl covers every page; browse covers the
+  pages you open. Crawl issues count as Method 1 in the Phase 6 matrix. Confirm them
+  with a browse check before reporting.
+- `get_ranked_keywords` (domain, `resultTypes: ["organic"]`): which pages earn search
+  traffic. Order the TOP PRIORITIES list by which fixes touch those pages.
+- `get_search_console_performance` if the project has it connected: real clicks and
+  impressions beat provider estimates. Label estimates as estimates.
+
+Ask before `run_site_audit` if the user hasn't mentioned a credit budget.
+
 ### Phase 1: Technical SEO Audit
 
 Check each item. For every finding, note the verification method used.
@@ -370,6 +388,8 @@ For each finding in your draft report:
   SITE REVIEW — [URL]
   [Date]
 ============================================
+
+SEARCH DATA: [OpenSEO crawl + rankings | not included]
 
 TOOLS & PLATFORM DETECTED
 ---------------------------

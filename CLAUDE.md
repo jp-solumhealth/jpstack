@@ -29,6 +29,7 @@ Pairs with [gstack](https://github.com/garrytan/gstack) for engineering executio
 | `/x-healthcare-posts` | X posts and threads for Healthcare AI audience |
 | `/linkedin-carousel-builder` | Branded carousel PDFs for LinkedIn |
 | `/fact-check` | Verify data claims before publishing |
+| `/seo` | SEO pulse, keywords, competitor gaps, audits, prospect local SEO (via OpenSEO MCP) |
 | `/solum-health-brand` | Auto-applies Solum Health design system |
 
 ### Engineering (via gstack)

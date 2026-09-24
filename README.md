@@ -30,6 +30,7 @@
 | `/x-healthcare-posts` | Content creator | X posts and threads for Healthcare AI audiences. Operator voice. Optimized for Heavy Ranker algorithm. |
 | `/linkedin-carousel-builder` | Visual content | Branded carousel PDFs (1080x1350, 4:5) with safe zones, mobile typography, Playwright export. |
 | `/fact-check` | QA engineer | Verifies numerical claims before publishing. Writes verification scripts, classifies claims, produces audit reports. |
+| `/seo` | Growth operator | Runs on [OpenSEO](https://github.com/every-app/open-seo) MCP. Seeds it with Solum's ICP, competitors, and money pages. Weekly SEO pulse (Search Console + GA4 demo conversions), ICP-filtered keyword research, competitor gaps, site audits, and local-SEO snapshots of prospect practices. |
 | `/solum-health-brand` | Brand guardian | Auto-activates on any content. Full design system: colors, DM Sans, gradients, spacing, CSS starter. |
 
 ## Demo: one conference, four skills
@@ -168,6 +169,7 @@ These skills pull from your existing tools. The more connectors you have, the mo
 | **Fireflies** | pricing-coach, product-insights, pmf-pulse, investor-report, weekly-retro |
 | **Apollo.io** | conference-prep, post-conference-fup, pmf-pulse, weekly-retro |
 | **Ahrefs** | pmf-pulse competitor benchmarking |
+| **OpenSEO** | seo, site-review (optional search data). Install: `/plugin marketplace add every-app/open-seo` then `/plugin install openseo@openseo` |
 | **ICD-10 / NPI / CMS** | prior-auth-review product demo |
 
 Skills degrade gracefully. If a connector isn't available, the skill uses what it can and tells you what's missing.
@@ -186,7 +188,7 @@ cd ~/.claude/skills/jpstack && git pull && ./setup
 ## Uninstalling
 
 ```bash
-for s in chief-of-staff pmf-pulse product-insights weekly-retro investor-report pricing-coach conference-prep post-conference-insights post-conference-fup prior-auth-review x-healthcare-posts linkedin-carousel-builder fact-check solum-health-brand; do rm -f ~/.claude/skills/$s; done && rm -rf ~/.claude/skills/jpstack
+for s in chief-of-staff pmf-pulse product-insights weekly-retro investor-report pricing-coach conference-prep post-conference-insights post-conference-fup prior-auth-review x-healthcare-posts linkedin-carousel-builder fact-check solum-health-brand site-review seo; do rm -f ~/.claude/skills/$s; done && rm -rf ~/.claude/skills/jpstack
 ```
 
 ## How I use these skills
