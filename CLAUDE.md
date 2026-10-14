@@ -5,7 +5,7 @@ Pairs with [gstack](https://github.com/garrytan/gstack) for engineering executio
 
 ## THIS REPOSITORY IS PUBLIC
 
-Never commit confidential data here: investor names or terms, ARR / MRR / revenue / burn / runway or any internal financials, pricing or rate cards, customer or prospect names and contacts, call transcripts or quotes, CRM / Notion / Drive IDs, credentials, PHI, or personal finances. Skills that need any of that live in the private repo (`jpstack-private`). Use placeholders like `[Prospect]`, `$[X]`, `<ID>`. The pre-push check `scripts/check-public.sh` must pass.
+Never commit confidential data here: investor names or terms, ARR / MRR / revenue / burn / runway or any internal financials, pricing or rate cards, customer or prospect names and contacts, call transcripts or quotes, CRM / Notion / Drive IDs, credentials, PHI, or personal finances. Skills that need any of that live in the private repo (`jpstack-private`). Use placeholders like `[Prospect]`, `$[X]`, `<ID>`. Before every commit, read the staged diff for confidential data, then `scripts/check-public.sh --staged` must pass (it also runs automatically on commit and push via the global git hooks). Never bypass with `--no-verify`.
 
 ## Skills
 

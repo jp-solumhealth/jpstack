@@ -1,13 +1,15 @@
 #!/bin/bash
 # Blocks confidential content from reaching this PUBLIC repo.
 # Runs as a git pre-push hook (install: ln -s ../../scripts/check-public.sh .git/hooks/pre-push)
-# and can be run by hand. Checks the files tracked in HEAD.
+# and as part of the global pre-commit hook (with --staged), and can be run by hand.
+# Default checks the files in HEAD; --staged checks what is about to be committed.
 #
 # Confidential names (investors, customers, prospects, people) are NOT listed here,
 # since this file is public. Put them one per line in ./private-terms.txt (gitignored).
 set -u
 cd "$(git rev-parse --show-toplevel)" || exit 1
 fail=0
+if [ "${1:-}" = "--staged" ]; then SRC="--cached"; else SRC="HEAD"; fi
 
 # 1. Skills that must only live in the private repo
 PRIVATE_SKILLS="contract-review baa-review title-agency-calculator title-closing-review
@@ -17,7 +19,7 @@ detecting-medical-groups proposal-personalizer offer-letter investor-report pric
 sow-builder business-case-builder solum-business-case post-call precall-brief auth-tracker
 waalaxy-prospecting cfo-review tax-deductions"
 for s in $PRIVATE_SKILLS; do
-  if git ls-tree -d --name-only HEAD "$s" | grep -q .; then
+  if { [ "$SRC" = HEAD ] && git ls-tree -d --name-only HEAD "$s" || git ls-files -- "$s/"; } | grep -q .; then
     echo "BLOCKED: private skill '$s' is in the public repo"; fail=1
   fi
 done
@@ -25,7 +27,7 @@ done
 # 2. Secrets and confidential patterns
 check() {
   local label="$1" pattern="$2" hits
-  hits=$(git grep -I -n -i -E -e "$pattern" HEAD -- . ':!scripts/check-public.sh' 2>/dev/null | head -5)
+  hits=$(git grep -I -n -i -E -e "$pattern" $SRC -- . ':!scripts/check-public.sh' 2>/dev/null | head -5)
   if [ -n "$hits" ]; then echo "BLOCKED: $label"; echo "$hits" | sed 's/^/    /'; fail=1; fi
 }
 check "API key or token" '(sk-[A-Za-z0-9_-]{20,}|sk-ant-|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{20,}|github_pat_|xox[bap]-|AIza[0-9A-Za-z_-]{30}|pat-na1-)'
@@ -37,7 +39,7 @@ check "Pricing / rate card" '\$[0-9.,]+ ?/ ?(mo|month|unit|auth|check)\b'
 if [ -f private-terms.txt ]; then
   while IFS= read -r term; do
     [ -z "$term" ] && continue; case "$term" in \#*) continue;; esac
-    hits=$(git grep -I -n -i -w -F -e "$term" HEAD -- . ':!scripts/check-public.sh' 2>/dev/null | head -3)
+    hits=$(git grep -I -n -i -w -F -e "$term" $SRC -- . ':!scripts/check-public.sh' 2>/dev/null | head -3)
     if [ -n "$hits" ]; then echo "BLOCKED: private term"; echo "$hits" | sed 's/^/    /'; fail=1; fi
   done < private-terms.txt
 else
