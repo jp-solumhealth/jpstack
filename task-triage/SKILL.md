@@ -54,6 +54,17 @@ Triage: C 35 / I 60 → plan in chat, 1 agent, Codex review + diff read.
 
 Show the factor scores only if the user asks or the call is close to a boundary.
 
+## Models per role (keep it cheap)
+
+| Role | Model |
+|---|---|
+| Orchestrator / architect, final synthesis | main session (Opus) |
+| Search, scans, inventories, extraction, checklist critics | haiku |
+| Builders, judgment reviewers and critics, research summaries | sonnet |
+| Second look on a high-stakes finding (Impact 71+) | opus, only after a cheaper pass flags it |
+
+Pass `model` explicitly on every Agent call. Do it directly, with no agent, when it takes a few tool calls; use a script for anything mechanical.
+
 ## Rules
 
 1. **When unsure, pick the lower tier.** Escalate one tier if the agent fails twice on the same thing.
