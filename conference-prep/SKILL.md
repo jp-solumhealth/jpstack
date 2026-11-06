@@ -1,10 +1,7 @@
 ---
 name: conference-prep
 description: >
-  Full conference preparation workflow with phase-gated execution and parallel tracks.
-  After Phase 2, the agenda document builds in the background while the lead intelligence
-  pipeline continues sequentially through enrichment, validation, and Instantly upload.
-  Extracts attendees, classifies ICPs, enriches contacts via Apollo-first waterfall
+  Full conference preparation workflow with phase-gated execution. Extracts attendees, classifies ICPs, enriches contacts via Apollo-first waterfall
   (Apollo → Crustdata → Hunter.io finder), validates ALL emails through Hunter.io verifier,
   outputs three ICP lists (Attendees, Non-Attendees, Participating Companies), uploads
   validated leads to Instantly, and generates a branded curated agenda document.

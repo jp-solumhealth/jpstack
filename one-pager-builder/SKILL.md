@@ -1,6 +1,7 @@
 ---
 name: one-pager-builder
-description: Build a single-page branded PDF brief for a Solum Health prospect or customer. Two modes. Mode 1 (opportunity brief) triggers on "build a one pager", "opportunity brief", "deal brief", "sales one-pager", "C-suite brief", "one pager for [company]". Mode 2 (website assessment) triggers on "website assessment", "website audit", "CEO/COO website review", "growth assessment", "conversion audit for [company]". Both produce a beautifully designed, on-brand PDF with the Solum design system, client logo trust strip, and a prominent CTA to book at https://getsolum.com/book. Output goes to ~/Documents/Claude/<project>/prospects/<target>/ as both .pdf and .html.
+description: >
+  Build a single-page branded PDF brief for a Solum Health prospect or customer. Two modes. Mode 1 (opportunity brief) triggers on "build a one pager", "opportunity brief", "deal brief", "sales one-pager", "C-suite brief", "one pager for [company]". Mode 2 (website assessment) triggers on "website assessment", "website audit", "CEO/COO website review", "growth assessment", "conversion audit for [company]". Both produce a beautifully designed, on-brand PDF with the Solum design system, client logo trust strip, and a prominent CTA to book at https://getsolum.com/book. Output goes to the project prospects folder for the target as both .pdf and .html.
 ---
 
 # One-Pager Builder

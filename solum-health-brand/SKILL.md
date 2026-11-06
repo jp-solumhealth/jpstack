@@ -1,3 +1,8 @@
+---
+name: solum-health-brand
+description: Solum Health brand guidelines (logo, colors, MONTSERRAT font, voice). Use automatically when creating any Solum content, web pages, HTML documents, one-pagers, decks or marketing materials.
+---
+
 # Solum Health Brand Guidelines Skill
 
 Use this skill automatically when creating any content, web pages, HTML documents, landing pages, one-pagers, or marketing materials for Solum Health. This ensures all output is on-brand.

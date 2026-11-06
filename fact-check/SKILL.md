@@ -1,3 +1,8 @@
+---
+name: fact-check
+description: Verify numerical claims, data-driven statements and factual assertions in documents before they are finalized. Use before delivering any report, deck, model, email or one-pager that contains figures, names, dates or external claims.
+---
+
 # Skill: Fact-Check
 
 Automatically verify numerical claims, data-driven statements, and factual assertions in documents before they are finalized.
