@@ -15,6 +15,7 @@ PERMISSION_MODE="${PERMISSION_MODE:-auto}"
 LIMIT_SLEEP="${LIMIT_SLEEP:-1800}"      # wait for usage window reset after a failed run
 MAX_FAILS="${MAX_FAILS:-4}"             # consecutive failed runs before giving up
 MAX_STALLS="${MAX_STALLS:-3}"           # consecutive runs with no commit and no task change
+PUSH_EVERY="${PUSH_EVERY:-1800}"        # push the overnight branch at most this often (seconds), 0 = never
 
 NIGHT=".night"
 LOGS="$NIGHT/logs"
@@ -46,6 +47,22 @@ Never ask questions, never push, never deploy, never touch .env files or product
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$NIGHT/night.log"; }
 status() { echo "$*" > "$NIGHT/status"; }
+
+# Only this script pushes, only the overnight branch, never main
+BRANCH=$(git branch --show-current)
+last_push=0; pushed_head=""
+push_branch() {
+  (( PUSH_EVERY > 0 )) || return
+  [[ "$BRANCH" == overnight/* ]] || { log "Branch $BRANCH is not overnight/*, not pushing"; PUSH_EVERY=0; return; }
+  git remote get-url origin >/dev/null 2>&1 || { log "No origin remote, not pushing"; PUSH_EVERY=0; return; }
+  local head=$(git rev-parse HEAD)
+  [[ "$head" == "$pushed_head" ]] && return
+  if git push -q -u origin "$BRANCH" >> "$NIGHT/night.log" 2>&1; then
+    pushed_head="$head"; last_push=$(date +%s); log "Pushed $BRANCH at $(git rev-parse --short HEAD)"
+  else
+    log "Push failed, will retry next window"; last_push=$(date +%s)
+  fi
+}
 
 fails=0; stalls=0
 log "Night build started on branch $(git branch --show-current)"
@@ -86,8 +103,11 @@ for i in $(seq 1 "$MAX_ITERS"); do
   else
     stalls=0
   fi
+  (( $(date +%s) - last_push >= PUSH_EVERY )) && push_branch
   sleep 20
 done
+
+push_branch
 
 done_n=$(grep -c '^- \[x\]' TASKS.md); open_n=$(grep -c '^- \[ \]' TASKS.md); blocked_n=$(grep -c '^- \[!\]' TASKS.md)
 summary="Night build finished: $done_n done, $open_n open, $blocked_n blocked"

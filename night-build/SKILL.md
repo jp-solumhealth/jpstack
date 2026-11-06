@@ -35,7 +35,7 @@ Planning is the high-value part, so do it here in the main session, not in the l
 - Checks that must all pass before a commit: <e.g. npm run lint && npm run typecheck && npm test>
 - Stack and conventions: <short list from SPEC.md>
 - Use test/local credentials only (from .env.example or local Supabase). Never read or write .env, never use production keys.
-- Never push, deploy, run migrations against a remote database, or send anything outside this machine.
+- Never push (the loop script pushes the branch itself), deploy, run migrations against a remote database, or send anything outside this machine.
 - No new dependencies unless the task needs them; prefer well known packages.
 - If something in SPEC.md is ambiguous, pick the simplest reading and note it in PROGRESS.md.
 ```
@@ -65,7 +65,9 @@ When JP says it's started, wait ~60 seconds, then confirm it is alive: `.night/s
 - laptop plugged in, lid open (`caffeinate -i` does not stop lid-close sleep unless an external display is attached)
 - how to stop: `touch <project>/.night/STOP`
 
-Tunables (env vars before the command): `MAX_ITERS` (40), `MAX_TURNS` (80), `MODEL` (sonnet), `PERMISSION_MODE` (auto), `LIMIT_SLEEP` (1800 seconds to wait after a failed run, usually a usage limit).
+Tunables (env vars before the command): `MAX_ITERS` (40), `MAX_TURNS` (80), `MODEL` (sonnet), `PERMISSION_MODE` (auto), `LIMIT_SLEEP` (1800 seconds to wait after a failed run, usually a usage limit), `PUSH_EVERY` (1800 seconds; 0 turns pushing off).
+
+Pushing: the script, not the build sessions, pushes the `overnight/<date>` branch to `origin` after the first finished task, then at most every `PUSH_EVERY` seconds when there are new commits, and once more at the end. It only ever pushes a branch named `overnight/*`, never `main`, and skips pushing if there is no `origin` remote. If the project should end up on GitHub, create the repo (private by default) and add `origin` during Step 3.
 
 ## Mode 2: Status
 Read `.night/status`, the tail of `.night/night.log`, counts of `[x]`, `[ ]`, `[!]` in TASKS.md, and `git log --oneline overnight/<date> | head`. Three lines max.
