@@ -51,12 +51,16 @@ Add `.night/` to `.gitignore` (logs, lock, status live there).
 ### Step 4: Show JP the plan, get a yes
 Show the task list and the check command. Wait for an explicit go. This is the last human touchpoint of the night.
 
-### Step 5: Launch detached, so it survives this session closing
-First run `claude auth status`. The loop uses the terminal CLI login, which is separate from the desktop app. If `loggedIn` is false, stop and ask JP to run `claude auth login` in a terminal; never handle the login yourself.
+### Step 5: JP launches it from his own Terminal
+Do not start the loop from this session. The session's environment cannot use JP's CLI login, so a loop started here fails on its first run. Create `.night/` (`mkdir -p .night`), then give JP these two commands, each in its own `bash` block, to run in Terminal:
+```bash
+claude auth status
+```
+(must show `"loggedIn": true`; if not, `claude auth login` first)
 ```bash
 cd <project> && nohup caffeinate -i zsh ~/.claude/skills/night-build/run-night.sh "$PWD" > .night/nohup.log 2>&1 &
 ```
-Create `.night/` first (`mkdir -p .night`). Wait ~60 seconds, then confirm it is alive: `.night/status` says "running 1/..." and `.night/logs/run-01.log` exists. Report to JP:
+When JP says it's started, wait ~60 seconds, then confirm it is alive: `.night/status` says "running 1/..." and `.night/logs/run-01.log` exists. If the status file is missing, read `.night/nohup.log` and `.night/night.log` and tell JP why it stopped. Report to JP:
 - the branch, the number of tasks, the log path
 - laptop plugged in, lid open (`caffeinate -i` does not stop lid-close sleep unless an external display is attached)
 - how to stop: `touch <project>/.night/STOP`
