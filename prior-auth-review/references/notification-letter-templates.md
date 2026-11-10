@@ -79,4 +79,4 @@ If no custom template is found, the skill generates letters based on the decisio
 
 ## Sample Template Provided
 
-See `Medicare_PA_Approval_Letter.pdf` in `prior-auth-review-skill/assets/` for a sample approval letter format.
+See `Medicare_PA_Approval_Letter.pdf` in `assets/` for a sample approval letter format.

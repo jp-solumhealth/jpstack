@@ -69,7 +69,7 @@ Insurance = 68049 (Peach State Health Plan)
 Y el check automático da failed
 
 THEN (comportamiento):
-Reintentar el check con Insurance = QBZJV
+Reintentar el check con Insurance = QBZJV (Georgia straight Medicaid)
 
 Ejemplo (evidencia):
 [Clinic A], paciente 00000000-0000-0000-0000-000000000001
@@ -90,12 +90,7 @@ Ejemplo (evidencia):
 
 ## Known Trading Partner IDs
 
-| Payer | TPID | Notes |
-|-------|------|-------|
-| Peach State Health Plan (GA Medicaid MCO) | 68049 | On failed check → retry with QBZJV |
-| Georgia straight Medicaid | QBZJV | Fallback payer for 68049 |
-
-Add new mappings here as they come up.
+Keep the payer → TPID table and any fallback rules in a private file (e.g. `~/.claude/private/trading-partner-ids.md`), not in this public repo. Read it before writing feedback; if the payer is not there, ask the user for the TPID and add it to the private file.
 
 ## Common Mistakes
 

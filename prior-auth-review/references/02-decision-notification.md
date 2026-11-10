@@ -90,7 +90,7 @@ override_info = {
 
 **Check for Template Files:**
 
-Before generating letters, check if custom templates exist in the `prior-auth-review-skill/assets/` folder.
+Before generating letters, check if custom templates exist in the `assets/` folder.
 
 - If a template file is found for the decision type, read and use it as the base template
 - If no template found, generate a nicely formatted pdf using the placeholders defined in the template reference

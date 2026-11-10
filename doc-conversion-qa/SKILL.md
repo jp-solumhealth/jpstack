@@ -1,6 +1,6 @@
 ---
 name: doc-conversion-qa
-description: Quality-guard for document format conversions. AUTOMATICALLY trigger before declaring success on any PDF→PPTX, PPTX→PDF, PDF→DOCX, DOCX→PDF, PDF→DOCX, or DOCX→PPTX conversion. Triggers on "convert this PDF to PPTX", "turn slides into editable", "PDF to Word", "DOCX to PDF", "export as PPTX", "reconstruct slides from PDF", "make this editable", or any request that produces a converted document. Validates visual fidelity (rendered output matches source), text completeness, no overlaps/clipping, font consistency, image preservation, and layout integrity. NEVER deliver a converted file without running this skill end-to-end first.
+description: Quality-guard for document format conversions. AUTOMATICALLY trigger before declaring success on any PDF→PPTX, PPTX→PDF, PDF→DOCX, DOCX→PDF, DOCX→PPTX, or PPTX→DOCX conversion. Triggers on "convert this PDF to PPTX", "turn slides into editable", "PDF to Word", "DOCX to PDF", "export as PPTX", "reconstruct slides from PDF", "make this editable", or any request that produces a converted document. Validates visual fidelity (rendered output matches source), text completeness, no overlaps/clipping, font consistency, image preservation, and layout integrity. NEVER deliver a converted file without running this skill end-to-end first.
 ---
 
 # Document Conversion QA Guard
@@ -80,8 +80,7 @@ For every conversion, run all of these. Treat each as a TaskCreate item.
 The skill ships with helper scripts under `scripts/`:
 
 - `scripts/render_pdf.py <input.pdf> <out_dir>` — renders each PDF page to PNG.
-- `scripts/render_pptx.py <input.pptx> <out_dir>` — converts to PDF via LibreOffice, then to PNGs.
-- `scripts/render_docx.py <input.docx> <out_dir>` — same idea for DOCX.
+- `scripts/render_office.py <input.pptx|input.docx> <out_dir>` — converts PPTX or DOCX to PDF via LibreOffice, then to PNGs.
 - `scripts/diff_text.py <source> <output>` — extracts text from each side and diffs by paragraph.
 - `scripts/qa_report.py <source> <output>` — full report: counts, diff, side-by-side preview index HTML.
 

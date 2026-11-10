@@ -1,6 +1,7 @@
 # Environment & secrets
 .env
 .env.*
+!.env.example
 .env.local
 .env.*.local
 *.pem
@@ -37,6 +38,11 @@ venv/
 
 # Local-only confidential term list read by scripts/check-public.sh
 private-terms.txt
+
+# Skill run outputs: may hold PHI, CRM data or call quotes
+outputs/
+waypoints/
+google-ads-workspace/
 
 # Vercel
 .vercel

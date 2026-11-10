@@ -13,8 +13,8 @@
 #      vaults, CPA exports, bank downloads).
 #   2. CONTENT patterns that are unambiguous PII (SSN, EIN, card PAN, routing and
 #      account numbers).
-#   3. A LOCAL DENYLIST of real names and strings — .claude/private-terms.txt,
-#      gitignored, never published. Add a contractor's name there once and it can
+#   3. A LOCAL DENYLIST of real names and strings — .claude/private-terms.txt or
+#      ./private-terms.txt, both gitignored, never published. Add a contractor's name there once and it can
 #      never be committed again.
 #
 # What this hook CANNOT catch: a real payee name paired with a real amount, written
@@ -93,15 +93,16 @@ scan "payment card number"                  '(^|[^0-9])(4[0-9]{12}([0-9]{3})?|5[
 scan "IBAN"                                 'iban[^A-Z0-9]{0,8}[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}'
 
 # ── 3. local denylist of real names/strings (gitignored, never published) ────────
-deny_file=".claude/private-terms.txt"
-if [ -f "$deny_file" ]; then
+# Both locations are honored, same as scripts/check-public.sh.
+for deny_file in ".claude/private-terms.txt" "private-terms.txt"; do
+  [ -f "$deny_file" ] || continue
   while IFS= read -r term; do
     case "$term" in ''|'#'*) continue ;; esac
     if printf '%s\n%s\n' "$names" "$added" | grep -Fqi -- "$term"; then
       note "denylisted private term (see $deny_file)"
     fi
   done < "$deny_file"
-fi
+done
 
 [ -z "$hits" ] && exit 0
 

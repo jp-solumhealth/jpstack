@@ -49,7 +49,7 @@ them when installed and fall back to the MCP tools directly when not.
 claude mcp add --transport http --scope user openseo https://app.openseo.so/mcp
 ```
 
-   OpenSEO needs an account (hosted: free tier, $10/mo, or pay-as-you-go credits) or a
+   OpenSEO needs an account (hosted: free tier, a paid monthly plan, or pay-as-you-go credits) or a
    self-hosted instance with a DataForSEO API key. Don't fall back to guessing metrics
    without it. If Ahrefs MCP is connected, offer that as the data source instead.
 

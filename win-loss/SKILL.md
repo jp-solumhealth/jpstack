@@ -12,7 +12,7 @@ Perform rigorous, data-driven win-loss analysis by pulling from HubSpot, Firefli
 ### Step 1: Determine Scope
 
 Ask the user (or infer from their request):
-- **Single deal analysis** — "why did we lose Action Seating" or "analyze the [Company] deal"
+- **Single deal analysis** — "why did we lose [Company]" or "analyze the [Company] deal"
 - **Portfolio analysis** — "win-loss analysis", "analyze our pipeline", "what patterns do you see"
 
 ### Step 2: Pull All Data
@@ -271,11 +271,3 @@ Deals worth re-engaging and why:
 8. **Include the "so what."** Every insight should connect to a specific action.
 9. **Time-box the data pull.** If a data source is unavailable or returns errors, note it and continue with what you have. Do not block the entire analysis on one failed API call.
 10. **Save the output.** Write the final report to `~/Documents/Claude/Agents/reports/win-loss-[date].md` so it is preserved.
-
-## Related Skills
-
-- founder-sales
-- sales-qualification
-- enterprise-sales
-- pricing-strategy
-- pricing-coach

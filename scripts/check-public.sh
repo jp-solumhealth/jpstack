@@ -5,7 +5,7 @@
 # Default checks the files in HEAD; --staged checks what is about to be committed.
 #
 # Confidential names (investors, customers, prospects, people) are NOT listed here,
-# since this file is public. Put them one per line in ./private-terms.txt (gitignored).
+# since this file is public. Put them one per line in ./private-terms.txt or ./.claude/private-terms.txt (both gitignored).
 set -u
 cd "$(git rev-parse --show-toplevel)" || exit 1
 fail=0
@@ -35,16 +35,18 @@ check "Investor list" '(investors?|backed by)[^a-z]{0,3}(:|include|are)'
 check "Internal financials" '\b(ARR|MRR)\b[^a-z]{0,5}\$?[0-9]|burn (rate )?(of|was|is|moved)[^.]{0,20}\$[0-9]|runway[^.]{0,15}[0-9]+ months'
 check "Pricing / rate card" '\$[0-9.,]+ ?/ ?(mo|month|unit|auth|check)\b'
 
-# 3. Local confidential term list
-if [ -f private-terms.txt ]; then
+# 3. Local confidential term lists (either location; the Claude Code guard hook reads both too)
+found_terms=0
+for terms_file in private-terms.txt .claude/private-terms.txt; do
+  [ -f "$terms_file" ] || continue
+  found_terms=1
   while IFS= read -r term; do
     [ -z "$term" ] && continue; case "$term" in \#*) continue;; esac
     hits=$(git grep -I -n -i -w -F -e "$term" $SRC -- . ':!scripts/check-public.sh' 2>/dev/null | head -3)
     if [ -n "$hits" ]; then echo "BLOCKED: private term"; echo "$hits" | sed 's/^/    /'; fail=1; fi
-  done < private-terms.txt
-else
-  echo "WARNING: private-terms.txt not found; only generic patterns were checked"
-fi
+  done < "$terms_file"
+done
+[ $found_terms -eq 1 ] || echo "WARNING: private-terms.txt not found; only generic patterns were checked"
 
 [ $fail -eq 0 ] && echo "check-public: OK" || echo "check-public: FAILED. Nothing confidential may be pushed to this public repo."
 exit $fail

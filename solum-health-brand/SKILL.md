@@ -1,3 +1,8 @@
+---
+name: solum-health-brand
+description: Solum Health design system (logo, colors, DM Sans typography, gradients, spacing, CSS starter). Use automatically when creating any content, web page, HTML document, landing page, one-pager or marketing material for Solum Health, so the output is on-brand.
+---
+
 # Solum Health Brand Guidelines Skill
 
 Use this skill automatically when creating any content, web pages, HTML documents, landing pages, one-pagers, or marketing materials for Solum Health. This ensures all output is on-brand.
@@ -118,6 +123,5 @@ body {
 ## Contact Information (for Solum Health materials)
 
 - **JP Montoya**, CEO, Solum Health
-- Email: jp@getsolum.com
-- Phone: (628) 276-2659
+- Email and phone: not stored in this public repo. Read them from `~/.claude/private/contact.md`; if that file is missing, ask the user. Never write them into a file in this repo.
 - Website: getsolum.com

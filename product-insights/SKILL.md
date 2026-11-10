@@ -148,7 +148,7 @@ Score every product signal using this framework:
 | **Reach** | How many customers mentioned this? | 1-5 (1=one customer, 5=majority) |
 | **Impact** | How much does this affect their workflow? | 1-5 (1=minor annoyance, 5=blocks core workflow) |
 | **Confidence** | How clear is the requirement? | 1-5 (1=vague wish, 5=specific with clear spec) |
-| **Effort** | Engineering effort estimate | 1-5 (1=XL/quarter, 5=S/day) |
+| **Effort** | Engineering effort estimate | 1-5 (1=S/day, 5=XL/quarter) |
 
 **RICE Score = (Reach x Impact x Confidence) / Effort**
 

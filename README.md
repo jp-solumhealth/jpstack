@@ -28,9 +28,9 @@ Opinionated workflow skills that handle the business side — daily briefings, P
 | `/fact-check` | QA engineer | Verifies numerical claims before publishing. Writes verification scripts, classifies claims, produces audit reports. |
 | `/solum-health-brand` | Brand guardian | Auto-activates on any content. Full design system: colors, DM Sans, gradients, spacing, CSS starter. |
 
-Also included: `/meeting-prep`, `/meeting-followup`, `/weekly-review`, `/win-loss`, `/site-review`, `/seo`, `/google-ads`, `/mobile-audit`, `/one-pager-builder`, `/icp-research`, `/team-feedback`, `/eligibility-check`, `/ops-metrics`, `/codex-review`, `/task-triage`, `/doc-conversion-qa`, `/postmortem`, `/mac-performance-triage`, `/uscis-petition-review`. See `CLAUDE.md` for the full list.
+Also included: `/meeting-prep`, `/meeting-followup`, `/weekly-review`, `/win-loss`, `/site-review`, `/seo`, `/google-ads`, `/mobile-audit`, `/one-pager-builder`, `/icp-research`, `/team-feedback`, `/eligibility-check`, `/ops-metrics`, `/codex-review`, `/night-build`, `/task-triage`, `/doc-conversion-qa`, `/postmortem`, `/mac-performance-triage`, `/uscis-petition-review`. See `CLAUDE.md` for the full list.
 
-## Demo: one conference, four skills
+## Demo: one conference, three skills
 
 I use jpstack to run the full lifecycle of every conference. One event generates dozens of qualified leads when the system works.
 
@@ -204,7 +204,7 @@ That compounding is the point.
 1. Fork this repo and replace brand in `solum-health-brand/SKILL.md`
 2. Update ICP criteria in `conference-prep/references/icp-criteria.md`
 3. Update PMF competitors and Reddit search terms in `pmf-pulse/SKILL.md`
-4. Set your revenue target in `weekly-retro/SKILL.md`
+4. Keep your revenue target in a private local file (not in this repo); `/weekly-retro` asks for it
 5. Swap MCP connectors — patterns work with any CRM, dialer, or outreach tool
 
 ## About Solum Health

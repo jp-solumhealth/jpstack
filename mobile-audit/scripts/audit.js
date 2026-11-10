@@ -51,7 +51,7 @@ async function auditViewport(browser, url, vp) {
         let a = el.parentElement;
         while (a) {
           const s = getComputedStyle(a);
-          if (s.overflow === "hidden" || s.overflowX === "hidden" || s.overflow === "auto" || s.overflowX === "auto") return true;
+          if (["hidden", "auto", "scroll", "clip"].includes(s.overflowX)) return true;
           a = a.parentElement;
         }
         return false;
@@ -132,7 +132,7 @@ async function auditViewport(browser, url, vp) {
       console.log(`  unclipped overflow: ${r.overflow.length}${r.overflow.length ? "  [BLOCKING]" : ""}`);
       r.overflow.slice(0, 10).forEach((o) => console.log(`     +${o.over}px  <${o.tag}> .${o.cls}`));
       console.log(`  tap targets under ${MIN_TAP}px: ${uniqTargets.length}`);
-      uniqTargets.slice(0, 10).forEach((s) => console.log(`     ${s.h}x${s.w}  "${s.txt}"`));
+      uniqTargets.slice(0, 10).forEach((s) => console.log(`     ${s.w}x${s.h}  "${s.txt}"`));
       console.log(`  text under ${MIN_FONT}px: ${uniqText.length}`);
       uniqText.slice(0, 10).forEach((t) => console.log(`     ${t.fs}px  "${t.txt}"`));
     }
@@ -144,5 +144,5 @@ async function auditViewport(browser, url, vp) {
     console.error(`\nFAILED: ${blocking} viewport(s) have blocking mobile issues.`);
     process.exit(1);
   }
-  console.log("\nPASSED: no blocking mobile issues.");
+  if (!asJson) console.log("\nPASSED: no blocking mobile issues.");
 })();

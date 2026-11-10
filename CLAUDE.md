@@ -54,6 +54,7 @@ Never commit confidential data here: investor names or terms, ARR / MRR / revenu
 |---|---|
 | `/task-triage` | Size planning, agents and review to task complexity and impact |
 | `/codex-review` | Second-model code review with OpenAI Codex |
+| `/night-build` | Unattended overnight build loop, one session per task |
 | `/fact-check` | Verify data claims before publishing |
 | `/doc-conversion-qa` | QA for document format conversions |
 | `/postmortem` | Capture and consult lessons from past failures |

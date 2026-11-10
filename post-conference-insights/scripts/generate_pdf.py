@@ -154,10 +154,13 @@ PAGE2_SUBTITLE = "Page one was strategy. This page is action. Print it, send it 
 
 CLOSING_MESSAGE = "That's what we took away from BHASe 2026.\nIf any of this hits close to home,\nwe'd love to talk."
 
-# Contact info (do not change unless company info changes)
+# Contact info. Email and phone are not stored in this public repo:
+# set SOLUM_CONTACT_EMAIL and SOLUM_CONTACT_PHONE in the environment.
 CONTACT_NAME = 'JP Montoya'
-CONTACT_EMAIL = 'jp@getsolum.com'
-CONTACT_PHONE = '628 276 2659'
+CONTACT_EMAIL = os.environ.get('SOLUM_CONTACT_EMAIL', '')
+CONTACT_PHONE = os.environ.get('SOLUM_CONTACT_PHONE', '')
+if not (CONTACT_EMAIL and CONTACT_PHONE):
+    sys.exit('ERROR: set SOLUM_CONTACT_EMAIL and SOLUM_CONTACT_PHONE before running.')
 CONTACT_WEB = 'getsolum.com'
 
 # Output path — modify the conference name

@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from datetime import datetime
 import json
 import os
 import pathlib
@@ -188,8 +189,12 @@ def validate_npi(npi: str) -> str:
 
 def validate_date(value: str, field: str) -> str:
     value = re.sub(r"\D", "", value or "")
-    if len(value) != 8:
-        raise StediError(f"{field} must be YYYYMMDD, got {value or '(empty)'!r}")
+    try:
+        if len(value) != 8:
+            raise ValueError
+        datetime.strptime(value, "%Y%m%d")
+    except ValueError:
+        raise StediError(f"{field} must be a real date as YYYYMMDD, got {value or '(empty)'!r}") from None
     return value
 
 

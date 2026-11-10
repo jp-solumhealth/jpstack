@@ -25,11 +25,12 @@ The output is always this format, in this order:
 1. FIRE DRILL (if any)
 2. HOT DEALS — closing soon, high value
 3. DEALS AT RISK — stale, no activity, overdue
-4. ACTION ITEMS — from yesterday's meetings
-5. PENDING RESPONSES — emails/messages awaiting reply
-6. NEW LEADS — contacts added in last 24-48h
-7. OUTREACH STATUS — active Apollo sequences
-8. TODAY'S PRIORITIES — synthesized from above
+4. PIPELINE SUMMARY — open deals, value, closing this month/quarter
+5. ACTION ITEMS — from yesterday's meetings
+6. PENDING RESPONSES — emails/messages awaiting reply
+7. NEW LEADS — contacts added in last 24-48h
+8. OUTREACH STATUS — active Apollo sequences
+9. TODAY'S PRIORITIES — synthesized from above
 ```
 
 ## Data Collection Workflow
@@ -59,8 +60,7 @@ Params:
   filterGroups: [
     { filters: [
       { propertyName: "hubspot_owner_id", operator: "EQ", value: "<ownerId>" },
-      { propertyName: "dealstage", operator: "NEQ", value: "closedwon" },
-      { propertyName: "dealstage", operator: "NEQ", value: "closedlost" }
+      { propertyName: "hs_is_closed", operator: "EQ", value: "false" }
     ]}
   ]
   properties: ["dealname", "amount", "dealstage", "closedate", "hubspot_owner_id",
@@ -194,7 +194,7 @@ Present the full briefing in this exact format:
 
 ```
 ============================================
-  DAILY BRIEFING — March 12, 2026
+  DAILY BRIEFING — [Today's Date]
   Solum Health | JP Montoya
 ============================================
 

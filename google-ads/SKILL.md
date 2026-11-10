@@ -1,7 +1,7 @@
 ---
 name: google-ads
 description: >
-  Ten-stage Google Ads operating system for a B2B healthcare AI company: builds a brand brain,
+  Eleven-stage Google Ads operating system for a B2B healthcare AI company: builds a brand brain,
   mines customer language, maps competitor angles, builds the keyword universe, designs the
   account structure, writes RSA copy, briefs intent-specific landing pages and video creative,
   runs a daily audit, and produces a weekly scaling plan and test roadmap. Read-only against the
@@ -26,7 +26,8 @@ a file that the next stage reads, so the loop compounds instead of restarting ev
 2. **Every campaign has a job.** It exists to produce a specific signal, and a named metric
    decides whether it scales, holds, or gets cut. No job, no budget.
 3. **We sell to practices, not patients.** Solum's buyer is the owner, practice manager, billing
-   lead, or clinical director at an ABA, behavioral health, or specialty practice. The problem is
+   lead, or clinical director at an ABA or pediatric therapy group first, PT / rehab second
+   (tiers in `conference-prep/references/icp-criteria.md`). The problem is
    admin load (prior auth, VOB, intake, denials). Never write copy that targets patients or
    implies a medical outcome.
 4. **Pipeline, not clicks.** For B2B SaaS the real conversion is a qualified demo that becomes a

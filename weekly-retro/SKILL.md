@@ -31,7 +31,7 @@ matter. This one tells you if you're closing the gap to your annual revenue targ
 ```
 search_crm_objects: objectType="deals"
   filterGroups: [{ filters: [
-    { propertyName: "dealstage", operator: "EQ", value: "closedwon" },
+    { propertyName: "hs_is_closed_won", operator: "EQ", value: "true" },
     { propertyName: "closedate", operator: "GTE", value: "{weekStart}" }
   ]}]
   properties: ["dealname", "amount", "closedate", "hs_analytics_source"]
@@ -44,6 +44,7 @@ search_crm_objects: objectType="deals"
     { propertyName: "dealstage", operator: "EQ", value: "closedlost" },
     { propertyName: "closedate", operator: "GTE", value: "{weekStart}" }
   ]}]
+  properties: ["dealname", "amount", "closedate", "closed_lost_reason"]
 ```
 
 **Pipeline movement:**
@@ -51,8 +52,7 @@ search_crm_objects: objectType="deals"
 search_crm_objects: objectType="deals"
   filterGroups: [{ filters: [
     { propertyName: "hs_lastmodifieddate", operator: "GTE", value: "{weekStart}" },
-    { propertyName: "dealstage", operator: "NEQ", value: "closedwon" },
-    { propertyName: "dealstage", operator: "NEQ", value: "closedlost" }
+    { propertyName: "hs_is_closed", operator: "EQ", value: "false" }
   ]}]
   properties: ["dealname", "amount", "dealstage", "closedate",
                "hs_lastmodifieddate", "hs_deal_stage_probability"]
@@ -133,7 +133,7 @@ Check for any conference-related activity:
 
 ### Revenue Pace Check
 
-Calculate against the annual target set in this file:
+Calculate against the annual target. Ask the user for it, or read it from a private local file. Never write the target or actuals into this file: this repo is public.
 
 ```
 Annual target: $[ANNUAL_TARGET]

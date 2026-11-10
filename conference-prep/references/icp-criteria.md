@@ -4,33 +4,49 @@ Use these rules to classify conference attendees as ICP or non-ICP for Solum Hea
 Solum Health sells AI-powered front office automation (intake, scheduling, prior auth,
 benefits verification, patient communication) to therapy and outpatient practices.
 
+**This file is the single ICP definition for every skill in this repo.** Other skills
+(outbound, ads, SEO, one-pagers, conference prep, PMF and product reviews) must reference it
+instead of restating their own vertical list. Re-derive it from won and lost deals with
+`/icp-research` when the customer base changes, and update it here only.
+
+## Focus Order (where time, credits and budget go)
+
+| Tier | Segment | How to treat it |
+|---|---|---|
+| **1. Core** | ABA and pediatric therapy: ABA providers, multidisciplinary pediatric therapy groups (ABA + speech + OT), autism services | Default target for all outbound, content, ads and events. Enrich first, follow up first. |
+| **2. Proven adjacent** | PT / rehab groups | Work after Tier 1. Same playbook, separate messaging. |
+| **3. Opportunistic** | Speech / OT only groups, imaging, RCM and billing companies serving Tier 1 or 2 | Take inbound. No dedicated outbound or spend. |
+| **4. Deprioritized** | Mental health counseling and psychiatry groups, substance use / recovery, primary care, DME, home health / hospice | Do not spend enrichment credits or ad budget. Answer inbound only if the buyer has a prior-auth or eligibility workload like Tier 1. |
+| **Not ICP** | Hospitals and health systems, payers, vendors, anyone who is not a provider | Skip. |
+
+Within a tier, bigger and multi-location beats smaller. The tiers decide order; the role and
+size rules below still decide whether an individual contact qualifies.
+
 ## Primary ICP (High Priority — Enrich Immediately)
 
 These are direct buyers or key decision-makers at target companies.
 
 ### Roles
 - Practice Owner / Founder
-- CEO, COO, CFO of a therapy/behavioral health organization
+- CEO, COO, CFO of a therapy organization
 - VP of Operations / VP of Clinical Operations
 - Director of Operations
 - Regional Director / Area Director (multi-site)
 - Managing Partner
 
 ### Company Types
-- Behavioral health groups (mental health, counseling)
 - ABA therapy providers
-- PT / OT / Speech therapy groups
-- Multi-location outpatient clinics
-- Substance use disorder (SUD) treatment centers
-- Psychiatric group practices
-- Counseling center groups
+- Multidisciplinary pediatric therapy groups (ABA, speech, OT under one roof)
+- Autism services and assessment providers
+- PT / rehab groups
+- Speech / OT therapy groups
 - IDD (Intellectual/Developmental Disability) service providers
 
 ### Company Size Signals
 - 5+ providers (too small = solo practice, not a fit)
 - Multiple locations preferred
 - Growing or recently acquired practices
-- PE-backed behavioral health platforms
+- PE-backed therapy platforms
 
 ## Secondary ICP (Medium Priority — Enrich If Capacity Allows)
 
@@ -46,6 +62,8 @@ These people influence buying decisions or manage the processes Solum automates.
 - Chief of Staff
 
 ### Additional Company Types
+- Mental health counseling and psychiatric group practices (Tier 4: only with a heavy prior-auth or eligibility workload)
+- Substance use disorder (SUD) treatment centers (Tier 4)
 - Virtual/telehealth therapy platforms
 - Residential treatment programs with outpatient arms
 - PHP/IOP programs

@@ -58,7 +58,7 @@ PATH="$HOME/.bun/bin:$PATH" $B js "performance.getEntriesByType('resource').filt
 
 # Check image optimization
 PATH="$HOME/.bun/bin:$PATH" $B js "document.querySelectorAll('img').length"
-PATH="$HOME/.bun/bin:$PATH" $B js "[...document.querySelectorAll('img')].filter(i => !i.loading).map(i => i.src).join('\n')"
+PATH="$HOME/.bun/bin:$PATH" $B js "[...document.querySelectorAll('img')].filter(i => i.getAttribute('loading') !== 'lazy').map(i => i.src).join('\n')"
 ```
 
 **Check:**
@@ -236,14 +236,14 @@ PATH="$HOME/.bun/bin:$PATH" $B js "[...document.querySelectorAll('script[src]')]
 PATH="$HOME/.bun/bin:$PATH" $B js "[...document.querySelectorAll('iframe')].map(f => f.src || f.id || 'anonymous iframe').join('\n')"
 
 # Check for common tools by global variables
-PATH="$HOME/.bun/bin:$PATH" $B js "({gtm: typeof google_tag_manager !== 'undefined', ga: typeof gtag !== 'undefined' || typeof ga !== 'undefined', fbq: typeof fbq !== 'undefined', hotjar: typeof hj !== 'undefined', hubspot: typeof _hsq !== 'undefined', intercom: typeof Intercom !== 'undefined', drift: typeof drift !== 'undefined', crisp: typeof $crisp !== 'undefined', zendesk: typeof zE !== 'undefined', callrail: !!document.querySelector('script[src*=\"callrail\"],script[src*=\"calltrk\"]'), leadtrap: !!document.querySelector('script[src*=\"leadtrap\"]'), vwo: typeof _vwo_code !== 'undefined'})"
+PATH="$HOME/.bun/bin:$PATH" $B js "({gtm: typeof google_tag_manager !== 'undefined', ga: typeof gtag !== 'undefined' || typeof ga !== 'undefined', fbq: typeof fbq !== 'undefined', hotjar: typeof hj !== 'undefined', hubspot: typeof _hsq !== 'undefined', intercom: typeof Intercom !== 'undefined', drift: typeof drift !== 'undefined', crisp: typeof \$crisp !== 'undefined', zendesk: typeof zE !== 'undefined', callrail: !!document.querySelector('script[src*=\"callrail\"],script[src*=\"calltrk\"]'), leadtrap: !!document.querySelector('script[src*=\"leadtrap\"]'), vwo: typeof _vwo_code !== 'undefined'})"
 ```
 
 **Identify and document:**
 - [ ] Analytics (GA4, GTM, Segment, Mixpanel, etc.)
 - [ ] Chat widgets (Intercom, Drift, Crisp, Zendesk, custom)
 - [ ] Call tracking (CallRail, CallTrackingMetrics, etc.)
-- [ ] A/B testing (VWO, Optimizely, Google Optimize)
+- [ ] A/B testing (VWO, Optimizely)
 - [ ] CRM integrations (HubSpot, Salesforce)
 - [ ] Marketing pixels (Facebook, LinkedIn, Google Ads)
 - [ ] Form tools (Typeform, Jotform, embedded forms)
