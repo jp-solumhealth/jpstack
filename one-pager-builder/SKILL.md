@@ -88,9 +88,9 @@ Follow `references/copy-rules.md`:
 
 1. Start from `templates/opportunity-brief.html`.
 2. Fill placeholders with target-specific copy + numbers.
-3. Copy client logos from `references/client-logos.md` URLs into `<target>/client-logos/`.
+3. Copy client logos into `<target>/client-logos/`, using the private logo list described in `references/client-logos.md`.
 4. Copy Solum wordmark SVG from `~/Documents/Claude/landing-page/logo-solumhealth-dark.svg` to the output folder.
-5. Run `scripts/build.sh <output-folder>` to generate PDF and screenshot.
+5. Run `scripts/build.sh <output-folder>/<target>-opportunities.html` to generate PDF and screenshot.
 
 ### Step 5 — Verify
 
@@ -104,7 +104,6 @@ Follow `references/copy-rules.md`:
 ~/Documents/Claude/<project>/prospects/<target>/
 ├── <target>-opportunities.pdf     # deliverable
 ├── <target>-opportunities.html    # source
-├── <target>-opportunities.txt     # plain text fallback
 ├── logo-solumhealth-dark.svg
 └── client-logos/
     ├── client-a.avif
@@ -114,7 +113,7 @@ Follow `references/copy-rules.md`:
 
 ## Design rules (brand system)
 
-Full brand reference: `~/Documents/Claude/Skills/jpstack/solum-health-brand/SKILL.md`.
+Full brand reference: `../solum-health-brand/SKILL.md`.
 
 Quick rules:
 - Font: DM Sans via Google Fonts (400, 500, 700)

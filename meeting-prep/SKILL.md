@@ -383,7 +383,7 @@ FACT-CHECK NOTES
 -----------------
 [List any discrepancies found during cross-referencing]
 - [e.g., "Title mismatch: HubSpot says 'Director of Ops', Apollo says 'VP Operations' — Apollo updated more recently, likely current"]
-- [e.g., "Deal amount is $50K in HubSpot but transcript from Feb 12 discussed $4K/month ($48K/yr) — minor discrepancy, verify on call"]
+- [e.g., "Deal amount is $[X] in HubSpot but transcript from [date] discussed $[Y]/month ($[Z]/yr) — minor discrepancy, verify on call"]
 - [e.g., "Action item from Jan meeting (send case study) — no evidence of completion in HubSpot"]
 
 [If no discrepancies: "All data consistent across sources."]

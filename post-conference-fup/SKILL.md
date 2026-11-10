@@ -414,7 +414,7 @@ POST-CONFERENCE PIPELINE: [Conference Name]
 Total contacts processed: XX
 
 HOT (personal follow-up):     XX contacts → XX deals created ($XX pipeline)
-WARM (3-touch sequence):      XX contacts → Sequence "[name]" active
+WARM (4-touch sequence):      XX contacts → Sequence "[name]" active
 COOL (4-touch sequence):      XX contacts → Sequence "[name]" active
 COLD (3-touch value sequence): XX contacts → Sequence "[name]" active
 

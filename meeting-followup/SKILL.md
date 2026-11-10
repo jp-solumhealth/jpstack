@@ -129,7 +129,7 @@ Before generating any output, run these verification checks:
 
 **Competitor Detection:**
 - Scan transcript for mentions of competitors, alternative solutions, or "we're also looking at..."
-- Common competitors to watch for: Availity, Waystar, Infinx, Infinitus, Olive AI, Rhyme, Myndshft, manual processes, "doing it in-house", "our current vendor"
+- Common competitors to watch for: Availity, Waystar, Infinx, Infinitus, Rhyme, Myndshft, manual processes, "doing it in-house", "our current vendor"
 - Flag the context of any competitive mention (comparing features, pricing, timeline)
 
 **Commitment Tracking:**

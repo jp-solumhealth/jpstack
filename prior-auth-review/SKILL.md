@@ -1,5 +1,5 @@
 ---
-name: prior-auth-review-skill
+name: prior-auth-review
 description: Automate payer review of prior authorization (PA) requests. This skill should be used when users say "Review this PA request", "Process prior authorization for [procedure]", "Assess medical necessity", "Generate PA decision", or when processing clinical documentation for coverage policy validation and authorization decisions.
 ---
 
@@ -96,7 +96,7 @@ To customize decision logic for your organization, edit [references/rubric.md](r
 Simply invoke the skill:
 
 ```
-Use the prior-auth-review-skill
+Use the prior-auth-review skill
 ```
 
 The skill will:
@@ -250,7 +250,7 @@ Offer user options to:
 ## Error Handling
 
 **Missing MCP Servers:**
-If required MCP connectors not available, display error listing missing connectors and Removefully.
+If required MCP connectors not available, display error listing missing connectors and exit gracefully.
 
 **Missing Subskill Prerequisites:**
 If Subskill 2 invoked without `waypoints/assessment.json`, notify user to complete Subskill 1 first.

@@ -74,8 +74,7 @@ execution. Expected keys:
 | Hunter.io | `hunter` or `hunter_api_key` | Query param `api_key={KEY}` |
 | Instantly | `instantly` or `instantly_api_key` | `Authorization: Bearer {KEY}` header |
 
-If a key is missing, ask the user before proceeding. Use the api-key-manager skill to store
-any newly provided keys.
+If a key is missing, ask the user before proceeding.
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: google-ads
 description: >
-  Ten-stage Google Ads operating system for a B2B healthcare AI company: builds a brand brain,
+  Eleven-stage Google Ads operating system for a B2B healthcare AI company: builds a brand brain,
   mines customer language, maps competitor angles, builds the keyword universe, designs the
   account structure, writes RSA copy, briefs intent-specific landing pages and video creative,
   runs a daily audit, and produces a weekly scaling plan and test roadmap. Read-only against the

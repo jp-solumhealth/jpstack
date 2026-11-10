@@ -134,7 +134,7 @@ Check for any conference-related activity:
 
 ### Revenue Pace Check
 
-Calculate against the annual target set in this file:
+Calculate against the annual target. Ask the user for it, or read it from a private local file. Never write the target or actuals into this file: this repo is public.
 
 ```
 Annual target: $[ANNUAL_TARGET]

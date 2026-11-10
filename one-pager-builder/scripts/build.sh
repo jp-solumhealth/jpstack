@@ -7,6 +7,8 @@
 set -e
 
 HTML="${1:?Usage: build.sh <html-file-path>}"
+# Chrome needs an absolute path for the file:// URL
+[ -f "$HTML" ] && HTML="$(cd "$(dirname "$HTML")" && pwd)/$(basename "$HTML")"
 DIR=$(dirname "$HTML")
 BASE=$(basename "$HTML" .html)
 PDF="$DIR/$BASE.pdf"
