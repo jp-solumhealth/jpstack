@@ -219,7 +219,7 @@ Store all raw agenda data in a structured format for verification.
 
 **B.2 — Session Curation**
 
-Select 6-10 sessions most relevant to behavioral health practice owners/operators.
+Select 6-10 sessions most relevant to owners and operators in the ICP (`references/icp-criteria.md`, Tier 1 first).
 Prioritize:
 1. AI and automation in healthcare operations
 2. Revenue cycle, billing, denial management
@@ -315,8 +315,8 @@ Update ledger: mark `apollo: done` for each contact.
 **3.2 — Post-Enrichment Reclassification**
 
 Re-evaluate all "Maybe" contacts using enriched company data:
-- Solo practice (<5 providers) or outside behavioral health → reclassify to "Not ICP", remove
-- Company confirms as a fit (5+ providers, behavioral health) → upgrade to ICP = Yes
+- Solo practice (<5 providers) or outside the ICP company types → reclassify to "Not ICP", remove
+- Company confirms as a fit (5+ providers, ICP company type) → upgrade to ICP = Yes, and record its tier
 
 **3.3 — ICP Non-Attendees (C-levels at attendee companies)**
 

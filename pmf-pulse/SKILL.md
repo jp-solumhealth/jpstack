@@ -74,7 +74,7 @@ Pull deal activity and contact engagement:
 ```
 search_crm_objects: objectType="deals"
   filterGroups: [{ filters: [
-    { propertyName: "dealstage", operator: "EQ", value: "closedwon" },
+    { propertyName: "hs_is_closed_won", operator: "EQ", value: "true" },
     { propertyName: "closedate", operator: "GTE", value: "{periodStart}" }
   ]}]
   properties: ["dealname", "amount", "dealstage", "closedate",
@@ -137,10 +137,10 @@ WebSearch: "patient intake" "paperwork" OR "manual" site:reddit.com
 WebSearch: "claims denied" OR "denial management" site:reddit.com
 ```
 
-**Behavioral health specific:**
+**Core ICP specific (see `conference-prep/references/icp-criteria.md`):**
 ```
 WebSearch: "ABA therapy" "billing" OR "insurance" OR "prior auth" site:reddit.com
-WebSearch: "mental health practice" "admin" OR "billing" OR "insurance" site:reddit.com
+WebSearch: "pediatric therapy" OR "speech therapy" "billing" OR "authorization" OR "insurance" site:reddit.com
 WebSearch: "therapy practice" "burnout" OR "overhead" OR "staffing" site:reddit.com
 ```
 

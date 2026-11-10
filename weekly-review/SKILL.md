@@ -48,8 +48,7 @@ Params:
   filterGroups: [
     { filters: [
       { propertyName: "hubspot_owner_id", operator: "EQ", value: "<ownerId>" },
-      { propertyName: "dealstage", operator: "NEQ", value: "closedwon" },
-      { propertyName: "dealstage", operator: "NEQ", value: "closedlost" }
+      { propertyName: "hs_is_closed", operator: "EQ", value: "false" }
     ]}
   ]
   properties: ["dealname", "amount", "dealstage", "closedate", "hubspot_owner_id",
@@ -70,7 +69,7 @@ Params:
   objectType: "deals"
   filterGroups: [
     { filters: [
-      { propertyName: "dealstage", operator: "EQ", value: "closedwon" },
+      { propertyName: "hs_is_closed_won", operator: "EQ", value: "true" },
       { propertyName: "closedate", operator: "GTE", value: "<start_of_week_ms>" }
     ]}
   ]

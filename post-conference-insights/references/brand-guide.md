@@ -30,8 +30,9 @@ identity is central to the brand's credibility. He's not a SaaS guy who read abo
 He lived it.
 
 ## Target Clients
-- **Primary:** Therapy practices (behavioral health, ABA, PT, OT, speech therapy)
-- **Secondary:** Outpatient specialty practices, group practices, multi-location clinics
+- **Primary:** ABA and pediatric therapy groups (ABA, speech, OT, multidisciplinary)
+- **Secondary:** PT / rehab groups
+- Full definition and tiers: `conference-prep/references/icp-criteria.md`
 - **Buyer persona:** Practice owners, clinic managers, COOs of growing therapy organizations
 
 ## Brand Voice
