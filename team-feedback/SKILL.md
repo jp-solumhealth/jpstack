@@ -69,7 +69,7 @@ Insurance = 68049 (Peach State Health Plan)
 Y el check automático da failed
 
 THEN (comportamiento):
-Reintentar el check con Insurance = QBZJV
+Reintentar el check con Insurance = QBZJV (Georgia straight Medicaid)
 
 Ejemplo (evidencia):
 [Clinic A], paciente 00000000-0000-0000-0000-000000000001

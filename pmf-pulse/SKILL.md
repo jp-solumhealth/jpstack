@@ -88,6 +88,7 @@ search_crm_objects: objectType="deals"
     { propertyName: "dealstage", operator: "EQ", value: "closedlost" },
     { propertyName: "closedate", operator: "GTE", value: "{periodStart}" }
   ]}]
+  properties: ["dealname", "amount", "closedate", "closed_lost_reason"]
 ```
 
 **Extract:**

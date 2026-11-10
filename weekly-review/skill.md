@@ -71,7 +71,7 @@ Params:
   filterGroups: [
     { filters: [
       { propertyName: "dealstage", operator: "EQ", value: "closedwon" },
-      { propertyName: "hs_lastmodifieddate", operator: "GTE", value: "<start_of_week_ms>" }
+      { propertyName: "closedate", operator: "GTE", value: "<start_of_week_ms>" }
     ]}
   ]
   properties: ["dealname", "amount", "closedate", "hs_lastmodifieddate"]
@@ -87,7 +87,7 @@ Params:
   filterGroups: [
     { filters: [
       { propertyName: "dealstage", operator: "EQ", value: "closedlost" },
-      { propertyName: "hs_lastmodifieddate", operator: "GTE", value: "<start_of_week_ms>" }
+      { propertyName: "closedate", operator: "GTE", value: "<start_of_week_ms>" }
     ]}
   ]
   properties: ["dealname", "amount", "closedate", "hs_lastmodifieddate",
@@ -297,8 +297,8 @@ Present the full review in this exact format:
 
 ## Meetings This Week
 
-- [Mon 3/10] — [Company/Person] — [Key takeaway in 1 line]
-- [Tue 3/11] — [Company/Person] — [Key takeaway in 1 line]
+- [Mon M/D] — [Company/Person] — [Key takeaway in 1 line]
+- [Tue M/D] — [Company/Person] — [Key takeaway in 1 line]
 - ...
 
 **Highlight:** [Most important meeting this week and why — 1-2 sentences]

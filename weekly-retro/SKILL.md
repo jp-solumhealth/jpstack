@@ -44,6 +44,7 @@ search_crm_objects: objectType="deals"
     { propertyName: "dealstage", operator: "EQ", value: "closedlost" },
     { propertyName: "closedate", operator: "GTE", value: "{weekStart}" }
   ]}]
+  properties: ["dealname", "amount", "closedate", "closed_lost_reason"]
 ```
 
 **Pipeline movement:**
