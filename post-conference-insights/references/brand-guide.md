@@ -2,8 +2,8 @@
 
 ## Company Identity
 - **Website:** getsolum.com
-- **Founder/CEO:** JP Montoya (Juan Pablo Montoya)
-- **Contact:** jp@getsolum.com | 628 276 2659
+- **Founder/CEO:** JP Montoya
+- **Contact:** email and phone live in `~/.claude/private/contact.md` (not in this public repo); ask the user if it is missing
 - **HQ:** San Francisco, CA
 
 ## What Solum Health Does

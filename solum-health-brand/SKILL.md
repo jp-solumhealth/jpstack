@@ -123,6 +123,5 @@ body {
 ## Contact Information (for Solum Health materials)
 
 - **JP Montoya**, CEO, Solum Health
-- Email: jp@getsolum.com
-- Phone: (628) 276-2659
+- Email and phone: not stored in this public repo. Read them from `~/.claude/private/contact.md`; if that file is missing, ask the user. Never write them into a file in this repo.
 - Website: getsolum.com

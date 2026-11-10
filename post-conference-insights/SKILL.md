@@ -99,7 +99,7 @@ the complete generator. Key specifications:
 - **Colors:** Navy #0E1C36, Terracotta #BD5237, Teal #267688
 - **Fonts:** Georgia Bold for headers, Arial for body. Size 9.5-11pt.
 - **Layout:** stat cards with colored top bars, section headers with terracotta left bar, teal bullet points, 2-column role cards on page 2
-- **Contact:** JP Montoya, jp@getsolum.com, 628 276 2659, getsolum.com
+- **Contact:** JP Montoya, getsolum.com. Email and phone come from `~/.claude/private/contact.md`; pass them to the script as `SOLUM_CONTACT_EMAIL` and `SOLUM_CONTACT_PHONE`
 - **Footer every page:** Solum logo left, "Solum Health Industry Insights" label, contact right
 
 The script at `scripts/generate_pdf.py` is the working template. Copy it, modify the content

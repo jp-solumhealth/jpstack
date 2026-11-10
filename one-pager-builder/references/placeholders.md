@@ -97,6 +97,7 @@ Totals must equal the sum of the 5 opportunity network numbers within rounding.
 | `{{FOOTER_CTA}}` | `Happy to walk the model. 30 minutes, peer to peer.` | `Happy to walk the audit. 30 minutes, no strings.` |
 | `{{BOOKING_URL}}` | `https://getsolum.com/book` | `https://getsolum.com/book` |
 | `{{BOOKING_LABEL}}` | `Book a call with JP` | `Book your assessment call` |
+| `{{CONTACT_EMAIL}}` / `{{CONTACT_PHONE}}` | from `~/.claude/private/contact.md` (never stored in this repo) | same |
 
 The booking button is a primary CTA (Solum Blue pill, white text) sitting directly under the peer-to-peer line, above the confidentiality note.
 

@@ -271,7 +271,7 @@ Include:
    "Why attend" insight box)
 5. **Networking callouts**: Teal-background bars for receptions, lunches, breaks
 6. **Concurrent session notes**: When sessions overlap, help the reader choose
-7. **Footer**: JP Montoya contact card (name, title, email, phone, website)
+7. **Footer**: JP Montoya contact card (name, title, email, phone, website). Fill `{{CONTACT_EMAIL}}` and `{{CONTACT_PHONE}}` from `~/.claude/private/contact.md`; ask the user if it is missing
 
 Brand colors:
 - Navy primary: #011C40
