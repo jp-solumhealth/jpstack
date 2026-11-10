@@ -1,6 +1,6 @@
 ---
 name: postmortem
-description: Capture and consult lessons from past failures so the same mistake never happens twice. AUTO-TRIGGER (1) before starting any non-trivial task — read INDEX.md and load lessons whose tags match the task; (2) whenever the user expresses frustration, says "this doesn't match", "not the same", "why so long", "this is wrong", "not good", "didn't work", asks for a retry on the same artifact, or any task requires more than 2 iterations to land — write a new lesson. Also trigger on phrases "postmortem", "post mortem", "lessons learned", "what went wrong", "review what happened", "retro for this task". Lessons live at ~/Documents/Claude/Skills/jpstack/postmortem/lessons/ and are indexed in INDEX.md by tag.
+description: Capture and consult lessons from past failures so the same mistake never happens twice. AUTO-TRIGGER (1) before starting any non-trivial task — read INDEX.md and load lessons whose tags match the task; (2) whenever the user expresses frustration, says "this doesn't match", "not the same", "why so long", "this is wrong", "not good", "didn't work", asks for a retry on the same artifact, or any task requires more than 2 iterations to land — write a new lesson. Also trigger on phrases "postmortem", "post mortem", "lessons learned", "what went wrong", "review what happened", "retro for this task". Lessons live in this skill's lessons/ folder and are indexed in its INDEX.md by tag.
 ---
 
 # Postmortem Skill
