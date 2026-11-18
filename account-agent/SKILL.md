@@ -102,6 +102,22 @@ that matters:
 Also confirm a master agreement exists if the BAA or proposal refers to one. A proposal alone is a
 weak contract: note what it does not cover.
 
+Checks that the first accounts showed are easy to miss:
+
+- **Commercial terms on paper.** A signed order with no tier, minimum or fee page falls back to
+  the standard terms' defaults. A discount promised only by email is not on paper. Either way,
+  draft a one-page amendment.
+- **Terms incorporated by link.** If the order links to a live, editable document, file a frozen
+  copy dated at signing in `01 Contract & Compliance`.
+- **Whose PHI.** When the client is a billing company or MSO, name the practice whose PHI will
+  actually flow, check that practice's owner in NPPES, and confirm the client holds a BAA with it.
+- **Billing started?** Find the date the minimum or first invoice is due under the contract, and
+  check that an invoice exists and that the revenue model records it. An unbilled minimum on an
+  idle account is both revenue leakage and a dispute waiting to happen: decide the billing
+  position before the next client conversation.
+- **Expected volume vs minimum.** Write down the volume the client gave at the demo and at
+  kickoff. If it fell, or if it falls below the minimum, the account starts amber.
+
 ### 3. Folder
 Every client folder has the same shape, so an agent (or a new hire) can find anything:
 
@@ -136,7 +152,9 @@ facts versus estimates.
 
 ### 7. External signals
 Company footprint (registry, website, reviews, headcount, job posts), the champion's background,
-acquisition or roll-up news. Set watches for champion job change and hiring of verification or
+acquisition or roll-up news. Watch for **name collisions**: small healthcare businesses often share
+a name with an unrelated company in another state, and B2B datasets merge them. Match on address
+and phone before trusting any firmographic number. Set watches for champion job change and hiring of verification or
 billing staff (growth, or a sign they plan to bring the work in-house).
 
 ### 8. Baseline metrics
@@ -150,8 +168,10 @@ more than 10 is red.
 
 ### 10. HubSpot hygiene list
 Stage matches reality, company record exists and is associated, all contacts associated, close
-date equals signature date, amount equals contracted value, renewal date set. List the fixes;
-apply them only with approval.
+date equals signature date, amount equals contracted value, renewal date set. Then check every
+system tells the same story: CRM stage, the client page in Notion, live-client counts in Slack,
+the revenue model. When they disagree, people forecast from the wrong one. List the fixes; apply
+them only with approval.
 
 Output of `init`: the Account Brief, the folder, a one-screen summary for the user, and the first
 drafted action.
@@ -274,7 +294,8 @@ the top three into `/chief-of-staff`.
 | Champion left | Within 7 days: reach the new owner with the ROI one-pager and a reset call |
 | Renewal in 120 days | Results review with ROI, then the renewal and expansion proposal in the same conversation |
 | Green and growing | Ask for the next location or practice; ask for a reference |
-| Billing company or MSO client | Their practices are the whitespace: map each practice, prove value on one, then roll out practice by practice |
+| Billing company or MSO client | Their practices are the whitespace: map each practice, prove value on one, then roll out practice by practice. **Start with a practice that is already credentialed and in-network**; a new practice waiting on credentialing cannot produce approvable requests. If the client sells the same service itself, position Solum as its engine, not its competitor |
+| Client blocked by something upstream of us | Change the starting point instead of waiting, and stop the billing clock until first live use, in writing |
 
 ## Self-improvement loop: how the fleet learns
 
