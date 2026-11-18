@@ -20,6 +20,11 @@ own loop:
 > read new data → update the brief → check stage gates and health rules → draft the next action →
 > human approves → log the result
 
+**The agent owns an outcome, not a script.** Its long-term goal is the client's lifetime value.
+The steps below are what it must *know* and the *brakes* it must respect, not a workflow to replay.
+Within the brakes it chooses its own strategy for the account. Workflows cap a smart model: every
+model upgrade should make the agent better, not bump into steps someone hard-coded.
+
 The agent is obsessive by design. Nothing on the client side is too small to record: a slower
 reply, a new location, a payer that keeps failing, a champion who changed jobs, an invoice paid
 late. The brief is where all of that accumulates, so that the next run (and the next person)
@@ -270,6 +275,89 @@ the top three into `/chief-of-staff`.
 | Renewal in 120 days | Results review with ROI, then the renewal and expansion proposal in the same conversation |
 | Green and growing | Ask for the next location or practice; ask for a reference |
 | Billing company or MSO client | Their practices are the whitespace: map each practice, prove value on one, then roll out practice by practice |
+
+## Self-improvement loop: how the fleet learns
+
+One account agent getting smarter is not the goal. The goal is that **when one agent learns
+something, every account agent knows it the next morning.** That takes four stores and one nightly
+job.
+
+**Stores** (all private: Drive or `jpstack-private`, never this repo)
+
+| Store | Scope | Written by | Read by |
+|---|---|---|---|
+| Account Brief | One client | That client's agent | That client's agent, humans |
+| Plays & lessons library | All clients | Nightly learning job (human-approved) | Every agent, every run |
+| Action ledger | All clients | Every agent and the approval queue | Learning job, evals |
+| Eval set | All clients | Learning job | Evals before any playbook change ships |
+
+**Action ledger.** Every drafted action gets one row: date, client, stage, health, play used,
+draft, **human decision (approved / edited / rejected)**, the edit diff and the reason, then the
+outcome at 14 and 30 days. Human edits are the most valuable training signal there is. Never let
+a reviewer fix a draft without the fix landing in the ledger.
+
+**Escalation closes the loop.** When the agent is stuck (missing data, needs a call, needs a
+decision), it raises `NEED HUMAN: <what, why, by when>` to the approval queue. The human resolves
+it and writes one line on *how*. That line goes into the ledger. An escalation that is resolved
+but not written back is a lesson the fleet will pay for again.
+
+**Nightly learning job** (runs after all account runs)
+1. Read yesterday's ledger rows, edits, rejections, escalations and every outcome that matured.
+2. Cluster them: recurring edit (the agent's tone, timing or ask is wrong), recurring escalation
+   (a missing tool or data source), plays that won or lost.
+3. Propose changes: a new lesson, a play rewrite, a threshold change, a new data source to wire up.
+4. Replay each proposed change against the eval set. Ship only changes that do not make past
+   decisions worse.
+5. Post the proposals for one-click approval. Approved lessons are in every agent's context the
+   next morning.
+
+Track **time from mistake to fleet-wide lesson** and drive it down. Target: under 24 hours.
+
+### Evals: as much effort as the agent itself
+
+Budget roughly the same time and tokens on evals as on the agent. Three questions only, per client,
+per action:
+
+| Eval | Question | Measured by |
+|---|---|---|
+| Advanced | Did the account move forward? | Stage gate cleared, volume up, renewal signed, expansion live |
+| Value | Did the client get real value, not just a push? | SLA met, ROI number they repeat back, no complaint after the action |
+| Came back | Is the relationship stronger? | They reply faster, engage more people, renew, refer |
+
+Activity counts (emails sent, calls logged) are not evals. Two more checks keep the fleet honest:
+
+- **Best-human benchmark.** For each play, name the best account outcome a human achieved with it
+  and hold the agent to that bar. Below it, the play goes back to a human.
+- **Calibration.** Each month, compare predicted churn probability per health band to what
+  happened, and refit the band probabilities.
+
+**Cost per account.** Log model spend per client per month next to retained and expansion revenue
+for that client. That ratio tells you where to run Tier 1 cadence and where weekly is enough.
+
+### How the pieces fit
+
+```
+                 ┌────────── Plays & lessons library ◄─── nightly learning job ◄──┐
+                 │                (read every run)          (proposes, evals,       │
+                 ▼                                           human approves)       │
+ signals ──► account agent (one per client) ──► draft / NEED HUMAN ──► approval queue
+ (CRM, ops,      │  writes own Account Brief                          │  approved /
+  email, calls,  │                                                    │  edited / rejected
+  billing,       ▼                                                    ▼  + reason
+  external)   portfolio agent ──► /chief-of-staff, /weekly-review   action ledger ──► outcomes
+              (ranks all accounts, catches conflicts)                    (14 / 30 days)
+```
+
+Related skills feed the same loop: `/meeting-followup` writes call facts into the brief,
+`/ops-metrics` supplies per-client volume and turnaround, `/postmortem` lessons about client work
+go into the plays library, and `/win-loss` checks closed deals against the account agent's lessons.
+
+### Bounded experiment
+
+Before raising autonomy across the book, pick one account or one segment (for example billing
+companies) and let the agent run it with more freedom: it sends routine messages without approval,
+sets its own cadence, and reports daily. Bounded blast radius, real numbers, a clear success target
+for the month. Widen autonomy only where the evals say it beats the human baseline.
 
 ## Account Brief template
 
