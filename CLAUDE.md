@@ -14,6 +14,7 @@ Never commit confidential data here: investor names or terms, ARR / MRR / revenu
 |---|---|
 | `/chief-of-staff` | Morning briefing from CRM, meetings and outreach |
 | `/weekly-review` | Weekly CEO dashboard across pipeline, meetings and outreach |
+| `/account-agent` | One agent per client from signature to renewal: contract and BAA gate, folder, account brief, health score, next action |
 | `/weekly-retro` | Friday scorecard: revenue pace, deals, calls, outreach, content |
 | `/pmf-pulse` | Multi-source PMF intelligence: calls, Reddit, job posts, competitors |
 | `/product-insights` | Sprint planning: feature requests, bugs, RICE scores from calls |
