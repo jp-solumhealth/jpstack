@@ -180,6 +180,9 @@ drafted action.
 
 ## Metrics (per client, never company-wide)
 
+The confirmed dictionary (IDs, formulas, sources, reference SQL and the checks that mark a
+metric verified) is `references/metrics.md`. The tables below are the summary.
+
 **A. Value delivered.** The strongest churn predictors for an ops service.
 
 | Metric | Definition | Amber | Red |
