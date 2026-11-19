@@ -28,7 +28,7 @@ Opinionated workflow skills that handle the business side — daily briefings, P
 | `/fact-check` | QA engineer | Verifies numerical claims before publishing. Writes verification scripts, classifies claims, produces audit reports. |
 | `/solum-health-brand` | Brand guardian | Auto-activates on any content. Full design system: colors, DM Sans, gradients, spacing, CSS starter. |
 
-Also included: `/meeting-prep`, `/meeting-followup`, `/weekly-review`, `/win-loss`, `/site-review`, `/seo`, `/google-ads`, `/mobile-audit`, `/one-pager-builder`, `/icp-research`, `/team-feedback`, `/eligibility-check`, `/ops-metrics`, `/codex-review`, `/task-triage`, `/doc-conversion-qa`, `/postmortem`, `/mac-performance-triage`, `/uscis-petition-review`. See `CLAUDE.md` for the full list.
+Also included: `/account-agent`, `/meeting-prep`, `/meeting-followup`, `/weekly-review`, `/win-loss`, `/site-review`, `/seo`, `/google-ads`, `/mobile-audit`, `/one-pager-builder`, `/icp-research`, `/team-feedback`, `/eligibility-check`, `/ops-metrics`, `/codex-review`, `/task-triage`, `/doc-conversion-qa`, `/postmortem`, `/mac-performance-triage`, `/uscis-petition-review`. See `CLAUDE.md` for the full list.
 
 ## Demo: one conference, four skills
 
