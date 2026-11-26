@@ -9,6 +9,8 @@ Never commit confidential data here: investor names or terms, ARR / MRR / revenu
 
 ## Skills
 
+Every client RFI gets `/rfi-qa` before it is shared and every time it is checked or edited. No exceptions.
+
 ### Founder operating system
 | Command | What it does |
 |---|---|
@@ -26,6 +28,7 @@ Never commit confidential data here: investor names or terms, ARR / MRR / revenu
 |---|---|
 | `/meeting-prep` | One-page brief before a sales or customer call |
 | `/meeting-followup` | Follow-up email, CRM notes and debrief after a call |
+| `/rfi-qa` | Full QA of every client RFI: no other company or NPI anywhere, NPPES check, answers and statuses |
 | `/win-loss` | Win-loss analysis across deals |
 | `/one-pager-builder` | Single-page branded PDF brief for a prospect |
 | `/conference-prep` | Pre-event: lead enrichment and curated agenda |
